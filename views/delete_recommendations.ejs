@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Delete Recommendation</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <h1 class="text-center mb-4 text-danger">Confirm Delete</h1>
+
+    <div class="alert alert-warning">
+      Are you sure you want to delete the recommendation titled:
+      <strong><%= recommendation.title %></strong>?
+    </div>
+
+    <form action="/recommendations/delete/<%= recommendation.id %>" method="POST">
+      <button type="submit" class="btn btn-danger">Yes, Delete</button>
+      <a href="/recommendations" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+</body>
+</html>

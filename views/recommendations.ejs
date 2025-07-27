@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recommendations</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+
+  <div class="container mt-5">
+    <h1 class="text-center mb-4">Recommendations</h1>
+
+    <% if (messages && messages.length > 0) { %>
+      <div class="alert alert-success"><%= messages[0] %></div>
+    <% } %>
+
+    <% if (errors && errors.length > 0) { %>
+      <div class="alert alert-danger"><%= errors[0] %></div>
+    <% } %>
+
+    <% if (user && user.role === 'admin') { %>
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Add a Recommendation</h5>
+          <form action="/recommendations/add" method="POST">
+            <div class="form-group">
+              <label for="title">Title</label>
+              <input type="text" name="title" id="title" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea name="description" id="description" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="image_url">Image URL</label>
+              <input type="text" name="image_url" id="image_url" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary">Add</button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">All Recommendations</h5>
+        <% if (recommendations && recommendations.length > 0) { %>
+          <ul class="list-group">
+            <% recommendations.forEach(item => { %>
+              <li class="list-group-item">
+                <h6><%= item.title %></h6>
+                <p><%= item.description %></p>
+
+                <% if (item.image_url) { %>
+                  <img src="<%= item.image_url %>" class="img-fluid mb-2" style="max-height: 200px;" alt="Recommendation Image">
+                <% } %>
+
+                <% if (user && user.role === 'admin') { %>
+                  <div class="d-flex justify-content-end">
+                    <a href="/recommendations/edit/<%= item.id %>" class="btn btn-sm btn-warning mr-2">Edit</a>
+
+                    <form action="/recommendations/delete/<%= item.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this recommendation?');">
+                      <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                  </div>
+                <% } %>
+              </li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <p>No recommendations found.</p>
+        <% } %>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

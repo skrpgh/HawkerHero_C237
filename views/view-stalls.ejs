@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Hawker Stalls</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .stall-image {
+            max-width: 100%;
+            height: 200px;
+            object-fit: cover;
+            margin-top: 0;
+        }
+        .btn-back {
+            margin-top: 30px;
+        }
+        .stall-card {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="text-center mb-4">Hawker Stalls</h1>
+
+        <!-- Loop through all stalls -->
+        <div class="row">
+            <% stalls.forEach(stall => { %>
+                <div class="col-md-4 stall-card">
+                    <div class="card">
+                        <% if (stall.image_url) { %>
+                            <img src="<%= stall.image_url %>" alt="<%= stall.name %>" class="card-img-top stall-image">
+                        <% } else { %>
+                            <img src="https://via.placeholder.com/300x200?text=No+Image" alt="<%= stall.name %>" class="card-img-top stall-image">
+                        <% } %>
+                        <div class="card-body">
+                            <h5 class="card-title"><%= stall.name %></h5>
+                            <p class="card-text"><strong>Cuisine:</strong> <%= stall.cuisine_type %></p>
+                            <p class="card-text"><strong>Location:</strong> <%= stall.location %></p>
+                            <a href="/view-stall/<%= stall.id %>" class="btn btn-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+
+        <a href="/" class="btn btn-secondary btn-back">Back to Homepage</a>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
