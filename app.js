@@ -94,18 +94,26 @@ app.post('/login', (req, res) => {
     }
 
     const sql = 'SELECT * FROM users WHERE email = ? AND password = SHA1(?)';
-    connection.query(sql, [email, password], (err, results) => {
+        connection.query(sql, [email, password], (err, results) => {
         if (err) throw err;
+
         if (results.length > 0) {
             req.session.user = results[0];
             req.flash('success', 'Login Successful');
-            res.redirect('/hawker-centers');
+
+            // Check if user is admin
+            if (results[0].role === 'admin') {
+                res.redirect('/dashboard');
+            } else {
+                res.redirect('/hawker-centers');
+            }
         } else {
             req.flash('error', 'Invalid email or password');
             res.redirect('/login');
         }
     });
 });
+
 
 // Dashboard routes
 app.get('/dashboard', checkAuthenticated, (req, res) => {

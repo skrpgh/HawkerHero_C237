@@ -1,87 +1,149 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <title>HakerHero</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
   <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="/">Hawker Hero</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">Hawker Hero</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
 
-      <div class="collapse navbar-collapse" id="collapsibleNavbar">
-        <ul class="navbar-nav me-auto">
+    <div class="collapse navbar-collapse" id="collapsibleNavbar">
+      <!-- Left-aligned nav items -->
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+
+        <!-- Modules Dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+            Modules
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/foodItems">Food Items</a></li>
+            <li><a class="dropdown-item" href="/reviews">Reviews</a></li>
+            <li><a class="dropdown-item" href="/recommendations">Recommendations</a></li>
+            <li><a class="dropdown-item" href="/hawker-centers">Hawker Centers</a></li>
+            <li><a class="dropdown-item" href="/view-stalls">Hawker Stalls</a></li>
+            <li><a class="dropdown-item" href="/favorite">Favorites</a></li>
+          </ul>
+        </li>
+
+        <% if (userRole === 'admin') { %>
           <li class="nav-item">
-            <a class="nav-link" href="/">Home</a>
           </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-              Modules
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/foodItems">Food Items</a></li>
-              <li><a class="dropdown-item" href="/reviews">Reviews</a></li>
-              <li><a class="dropdown-item" href="/recommendations">Recommendations</a></li>
-              <li><a class="dropdown-item" href="/hawker-centers">Hawker Centers</a></li>
-              <li><a class="dropdown-item" href="/view-stalls">Hawker Stalls</a></li>
-              <li><a class="dropdown-item" href="/favorite">Favorites</a></li>
-            </ul>
-          </li>
+        <% } %>
+      </ul>
 
-          <% if (userRole === 'admin') { %>
-            <li class="nav-item">
-              <a class="nav-link" href="/admin">Admin Panel</a>
-            </li>
-          <% } %>
-        </ul>
-
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
-              <i class="bi bi-person-circle"></i> Settings
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="/profile">Profile Settings</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
-            </ul>
-          </li>
-        </ul>
-      </div>
+      <!-- Right-aligned Profile Dropdown -->
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i> Settings
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="/profile">Profile Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+          </ul>
+        </li>
+      </ul>
     </div>
-  </nav>
-
+  </div>
+</nav>
+<body>
     <div class="container mt-5">
-        <h1>Dashboard</h1>
         <p>Welcome, <%= user.username %> (<%= user.role %>)</p>
 
-        <% if (user.role === 'admin') { %>
-            <div class="admin-dashboard">
-                <h2 class="text-center">Admin Dashboard</h2>
-                <p class="text-center">You can manage hawker stalls here.</p>
-                <div class="text-center">
-                    <a href="/admin" class="btn btn-custom btn-lg">Go to Admin Panel</a>
-                </div>
-            </div>
-        <% } else { %>
-            <div class="user-dashboard">
-                <h2 class="text-center">User Dashboard</h2>
-                <p class="text-center">You have limited access. You can view and search for hawker stalls.</p>
-                <div class="text-center">
-                    <a href="/view-stalls" class="btn btn-primary btn-lg">View Stalls</a>
-                </div>
-            </div>
-        <% } %>
-    </div>
+        <div class="mb-4">
+            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+            <a href="/logout" class="btn btn-danger ms-2">Logout</a>
+        </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Manage Food Items</h5>
+                        <p class="card-text">Add, edit or delete food items listed in hawker stalls.</p>
+                        <a href="/addFood" class="btn btn-primary">Add Food</a>
+                        <a href="/foodItems" class="btn btn-outline-primary ms-2">View All Food</a>
+                    </div>
+                </div>
+            </div>
+
+
+        <!-- Hawker Centers Section -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Hawker Centers</h5>
+                    <p class="card-text">Add, edit or delete hawker centers in the system.</p>
+                    <a href="/hawker-centers/new" class="btn btn-success">Add Hawker Center</a>
+                    <a href="/hawker-centers" class="btn btn-outline-success ms-2">View All Centers</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stalls Section -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Stalls</h5>
+                    <p class="card-text">View and manage stalls in the system.</p>
+                    <a href="/add-stall" class="btn btn-success ms-2">Add New Stall</a>
+                    <a href="/view-stalls" class="btn btn-outline-info ms-2">View All Stalls</a>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Recommendations Section -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Recommendations</h5>
+                    <p class="card-text">Curate and update food recommendations for users.</p>
+                    <a href="/recommendations/add" class="btn btn-dark">Add Recommendation</a>
+                    <a href="/recommendations" class="btn btn-outline-dark ms-2">View All Recommendations</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Reviews</h5>
+                    <p class="card-text">Review and moderate user-submitted reviews.</p>
+                    <a href="/addreviews" class="btn btn-secondary">Add Review</a>
+                    <a href="/reviews" class="btn btn-outline-secondary ms-2">View All Reviews</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorites Section -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Favorites</h5>
+                    <p class="card-text">Add or edit user favorites for stalls and food.</p>
+                    <a href="/addFavorite" class="btn btn-info text-white">Add Favorite</a>
+                    <a href="/favorite" class="btn btn-outline-info ms-2">View All Favorites</a>
+                </div>
+            </div>
+        </div>
+
+
+    </div> <!-- End container -->
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
