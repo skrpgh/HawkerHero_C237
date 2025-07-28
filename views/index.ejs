@@ -9,7 +9,6 @@
 
     <!-- Bootstrap 4 CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
         /* General Body Styling */
@@ -86,19 +85,24 @@
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light">
+    <a class="navbar-brand" href="/">Hawker Centre</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+=======
+  <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">Hawker Centre</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <a class="navbar-brand" href="/">Hawker Hero</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" id="navbarNav">
+        <div class="collapse navbar-collapse" id="collapsibleNavbar">
             <!-- Left-aligned Modules Dropdown -->
-            <ul class="navbar-nav mr-auto">
+            <ul class="navbar-nav me-auto">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                       data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Modules
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
@@ -113,7 +117,7 @@
             </ul>
 
             <!-- Right-aligned Login/Register Links -->
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
                     <a class="nav-link" href="/login">Login</a>
                 </li>
@@ -128,7 +132,7 @@
 <!-- Hero Section -->
 <div class="hero-section">
     <a href="/admin">
-        <img src="https://everydaytourcompany.com/wp-content/uploads/2024/11/maxwell_center.jpg"
+        <img src="https://everydaytourcompany.com/wp-content/uploads/2024/11/maxwell-center.jpg"
              alt="Hawker Centre" class="hero-image">
     </a>
     <div class="hero-text">
@@ -145,3 +149,5 @@
 
 </body>
 </html>
+
+
