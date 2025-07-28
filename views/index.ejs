@@ -87,4 +87,41 @@
               <li><a class="dropdown-item" href="/recommendations">Recommendations</a></li>
               <li><a class="dropdown-item" href="/hawker-centers">Hawker Centers</a></li>
               <li><a class="dropdown-item" href="/view-stalls">Hawker Stalls</a></li>
-              <li><a class="dropd
+              <li><a class="dropdown-item" href="/favorite">Favorites</a></li>
+            </ul>
+          </li>
+
+          <% if (userRole === 'admin') { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/admin">Admin Panel</a>
+            </li>
+          <% } %>
+        </ul>
+
+        <!-- Right Nav (Profile) -->
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
+              <i class="bi bi-person-circle"></i> Settings
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/profile">Profile Settings</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO BANNER / LANDING -->
+  <div class="container">
+    <div class="hero-banner mt-4">
+      <h1>Welcome to Hawker Hero</h1>
+      <p>Your one-stop platform to discover and review Singapore's best hawker food!</p>
+    </div>
+  </div>
+
+</body>
+</html>
