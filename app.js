@@ -99,7 +99,7 @@ app.post('/login', (req, res) => {
         if (results.length > 0) {
             req.session.user = results[0];
             req.flash('success', 'Login Successful');
-            res.redirect('/');
+            res.redirect('/hawker-centers');
         } else {
             req.flash('error', 'Invalid email or password');
             res.redirect('/login');
