@@ -94,18 +94,26 @@ app.post('/login', (req, res) => {
     }
 
     const sql = 'SELECT * FROM users WHERE email = ? AND password = SHA1(?)';
-    connection.query(sql, [email, password], (err, results) => {
+        connection.query(sql, [email, password], (err, results) => {
         if (err) throw err;
+
         if (results.length > 0) {
             req.session.user = results[0];
             req.flash('success', 'Login Successful');
-            res.redirect('/hawker-centers');
+
+            // Check if user is admin
+            if (results[0].role === 'admin') {
+                res.redirect('/dashboard');
+            } else {
+                res.redirect('/hawker-centers');
+            }
         } else {
             req.flash('error', 'Invalid email or password');
             res.redirect('/login');
         }
     });
 });
+
 
 // Dashboard routes
 app.get('/dashboard', checkAuthenticated, (req, res) => {
@@ -163,14 +171,38 @@ app.post('/register', validateRegistration, (req, res) => {
 });
 
 app.get('/hawker-centers', checkAuthenticated, (req, res) => {
-    const sql = 'SELECT * FROM hawker_centers';
-    connection.query(sql, (err, results) => {
-        if (err) throw err;
-        res.render('hawker_centers', { centers: results, user: req.session.user });
+  const sql = 'SELECT * FROM hawker_centers';
+  connection.query(sql, (err, results) => {
+    if (err) {
+      console.error('Error retrieving hawker centers:', err);
+      return res.status(500).send('Failed to retrieve hawker centers');
+    }
+
+    // ✅ RENDER the EJS page and PASS the user + results
+    res.render('hawker_centers', {
+      centers: results,
+      user: req.session.user || null
+    });
+  });
+});
+
+
+app.get('/hawker-centers/:centerId', (req, res) => {
+    const centerId = req.params.centerId;
+
+    // Query to get all stalls for the given center
+    const query = 'SELECT * FROM stalls WHERE center_id = ?';
+    connection.query(query, [centerId], (err, stalls) => {
+        if (err) {
+            console.error('Error retrieving stalls:', err);
+            return res.status(500).send('Failed to retrieve stalls');
+        }
+
+        // Render the page with the list of stalls for the specific center
+        res.render('hawker_centers', { stalls: stalls, centerId: centerId });
     });
 });
 
-app.get('/hawker-center/:id')
 
 // Search hawker centers
 app.post('/hawker-centers/search', checkAuthenticated, (req, res) => {
@@ -218,13 +250,19 @@ app.post('/hawker-centers/new', checkAuthenticated, checkAdmin, upload.single('i
 });
 
 // Edit center (admin only)
-app.get('/hawker-centers/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const sql = 'SELECT * FROM hawker_centers WHERE id = ?';
-    connection.query(sql, [req.params.id], (err, results) => {
-        if (err) throw err;
-        res.render('edit_center', { center: results[0], user: req.session.user, messages: req.flash('error') });
+app.get('/hawker-centers', checkAuthenticated, (req, res) => {
+    const sql = 'SELECT * FROM hawker_centers';
+    connection.query(sql, (err, results) => {
+        if (err) {
+            console.error('Error retrieving hawker centers:', err);
+            return res.status(500).send('Failed to retrieve hawker centers');
+        }
+
+        // Pass both centers and user data to the view
+        res.render('hawker_centers', { centers: results, user: req.session.user });
     });
 });
+
 
 app.post('/hawker-centers/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
     const { name, address, facilities, image_url } = req.body;
@@ -239,12 +277,14 @@ app.post('/hawker-centers/edit/:id', checkAuthenticated, checkAdmin, (req, res) 
 app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
     const sql = 'DELETE FROM hawker_centers WHERE id = ?';
     connection.query(sql, [req.params.id], (err) => {
-        if (err) throw err;
+        if (err) {
+            console.error('Error deleting hawker center:', err);
+            return res.status(500).send('Failed to delete hawker center');
+        }
+        req.flash('success', 'Hawker Center deleted successfully!');
         res.redirect('/hawker-centers');
     });
 });
-
-
 
 // Route to display all stalls for a specific hawker center
 app.get('/view-stalls/:centerId', (req, res) => {
@@ -283,36 +323,32 @@ app.get('/view-stalls/:centerId', (req, res) => {
 });
 
 // Add Stall Route (GET)
-app.get('/add-stall', checkAuthenticated, checkAdmin, (req, res) => {
-    res.render('add', { 
-        messages: req.flash('success'),  // Display success message if any
-        errors: req.flash('error')      // Display error message if any
-    });
+app.get('/stalls/add', checkAuthenticated, (req, res) => {
+    if (req.session.user && req.session.user.role === 'admin') {
+        res.render('addStall');
+    } else {
+        req.flash('error', 'Only admin can add stalls');
+        res.redirect('/hawker-centers');
+    }
 });
 
-// Add Stall Route (POST)
-app.post('/add-stall', checkAuthenticated, checkAdmin, (req, res) => {
-    const { name, location, cuisine_type, imageUrl, center_id } = req.body;
-
-    // Validate required fields
-    if (!name || !location || !cuisine_type || !center_id) {
-        req.flash('error', 'All fields are required.');
-        return res.redirect('/add-stall');
+app.post('/stalls/add', (req, res) => {
+    if (req.session.user && req.session.user.role === 'admin') {
+        const { name, location, description } = req.body;
+        const sql = 'INSERT INTO stalls (name, location, description) VALUES (?, ?, ?)';
+        connection.query(sql, [name, location, description], (err, result) => {
+            if (err) {
+                console.error('Error adding stall:', err);
+                req.flash('error', 'Failed to add stall');
+                return res.redirect('/stalls/add');
+            }
+            req.flash('success', 'Stall added successfully');
+            res.redirect('/hawker-centers');
+        });
+    } else {
+        req.flash('error', 'Unauthorized access');
+        res.redirect('/login');
     }
-
-    const image_url = imageUrl || null;
-
-    const sql = 'INSERT INTO stalls (name, location, cuisine_type, center_id, image_url) VALUES (?, ?, ?, ?, ?)';
-    connection.query(sql, [name, location, cuisine_type, center_id, image_url], (err, result) => {
-        if (err) {
-            console.error('Error inserting stall:', err.message);
-            req.flash('error', 'Failed to add stall.');
-            return res.redirect('/add-stall');
-        }
-
-        req.flash('success', 'Stall added successfully!');
-        res.redirect('/dashboard');
-    });
 });
 
 
