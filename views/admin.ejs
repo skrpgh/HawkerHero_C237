@@ -21,14 +21,77 @@
                         <h5 class="card-title">Manage Food Items</h5>
                         <p class="card-text">Add, edit or delete food items listed in hawker stalls.</p>
                         <a href="/addFood" class="btn btn-primary">Add Food</a>
-                        <a href="/" class="btn btn-outline-primary ms-2">View All Food</a>
+                        <a href="/foodItems" class="btn btn-outline-primary ms-2">View All Food</a>
                     </div>
                 </div>
             </div>
 
-            <!-- Add more admin tools below if needed -->
-            <!-- Example: Manage users, reviews, etc. -->
+
+        <!-- Hawker Centers Section -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Hawker Centers</h5>
+                    <p class="card-text">Add, edit or delete hawker centers in the system.</p>
+                    <a href="/hawker-centers/new" class="btn btn-success">Add Hawker Center</a>
+                    <a href="/hawker-centers" class="btn btn-outline-success ms-2">View All Centers</a>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <!-- Stalls Section -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Stalls</h5>
+                    <p class="card-text">View and manage stalls in the system.</p>
+                    <a href="/add-stall" class="btn btn-success ms-2">Add New Stall</a>
+                    <a href="/view-stalls" class="btn btn-outline-info ms-2">View All Stalls</a>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Recommendations Section -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Recommendations</h5>
+                    <p class="card-text">Curate and update food recommendations for users.</p>
+                    <a href="/recommendations/add" class="btn btn-dark">Add Recommendation</a>
+                    <a href="/recommendations" class="btn btn-outline-dark ms-2">View All Recommendations</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Reviews</h5>
+                    <p class="card-text">Review and moderate user-submitted reviews.</p>
+                    <a href="/addreviews" class="btn btn-secondary">Add Review</a>
+                    <a href="/reviews" class="btn btn-outline-secondary ms-2">View All Reviews</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorites Section -->
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Manage Favorites</h5>
+                    <p class="card-text">Add or edit user favorites for stalls and food.</p>
+                    <a href="/addFavorite" class="btn btn-info text-white">Add Favorite</a>
+                    <a href="/favorite" class="btn btn-outline-info ms-2">View All Favorites</a>
+                </div>
+            </div>
+        </div>
+
+
+    </div> <!-- End container -->
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
