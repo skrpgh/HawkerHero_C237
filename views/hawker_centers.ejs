@@ -150,35 +150,47 @@
       <a href="/hawker-centers/new" class="btn btn-success mb-3">Add New Center</a>
     <% } %>
 
-    <!-- DISPLAY CENTER CARDS -->
-    <div class="row">
-      <% centers.forEach(function(center) { %>
-        <div class="col-md-4">
-          <div class="box">
-            <h5 class="box-title"><%= center.name %></h5>
-            <p class="box-text"><%= center.address %></p>
-            <p class="box-text"><%= center.facilities %></p>
+   <!-- DISPLAY CENTER CARDS -->
+  <div class="row">
+    <% centers.forEach(function(center) { %>
+      <div class="col-md-4">
+        <div class="box">
+        <h5 class="box-title"><%= center.name %></h5>
+        <p class="box-text"><%= center.address %></p>
+        <p class="box-text"><%= center.facilities %></p>
 
-            <% if (center.image_url) { %>
-              <img src="<%= center.image_url %>" alt="Hawker Center Image">
-            <% } else { %>
-              <span class="text-muted">No image</span>
-            <% } %>
+        <% if (center.image_url) { %>
+          <img src="<%= center.image_url %>" alt="Hawker Center Image">
+        <% } else { %>
+          <span class="text-muted">No image</span>
+        <% } %>
 
-            <div class="box-actions">
-              <a href="/view-stalls/<%= center.id %>" class="btn btn-primary">View Stalls</a>
+        <div class="box-actions">
+          <a href="/view-stalls/<%= center.id %>" class="btn btn-primary">View Stalls</a>
 
-              <% if (user && user.role === 'admin') { %>
-                <a href="/hawker-centers/edit/<%= center.id %>" class="btn btn-warning btn-sm">Edit</a>
-                <form method="POST" action="/hawker-centers/delete/<%= center.id %>" style="display:inline;">
-                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </form>
+          <!-- Heart button to favorite/unfavorite -->
+          <form action="/hawker/favorite/<%= center.id %>" method="POST" style="display:inline;">
+            <button type="submit" class="btn btn-link" id="heart-btn-<%= center.id %>">
+              <% if (center.is_favorited) { %>
+                <i class="fa fa-heart" style="color: red;"></i> Favorite
+              <% } else { %>
+                <i class="fa fa-heart-o"></i> Favorite
               <% } %>
-            </div>
-          </div>
+            </button>
+          </form>
+
+          <% if (user && user.role === 'admin') { %>
+            <a href="/hawker-centers/edit/<%= center.id %>" class="btn btn-warning btn-sm">Edit</a>
+            <form method="POST" action="/hawker-centers/delete/<%= center.id %>" style="display:inline;">
+              <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+          <% } %>
         </div>
-      <% }); %>
+      </div>
     </div>
+  <% }); %>
+</div>
+
 
     <!-- BACK TO DASHBOARD -->
     <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
