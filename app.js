@@ -262,42 +262,16 @@ app.get('/hawker-centers', checkAuthenticated, (req, res) => {
         res.render('hawker_centers', { centers: results, user: req.session.user });
     });
 });
-app.post('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
-  const { id } = req.params;
-  const { name, location, cuisine_type, image_url } = req.body;
 
-  // Step 1: Get the center_id before updating the stall
-  const getCenterIdQuery = 'SELECT center_id FROM stalls WHERE id = ?';
-  connection.query(getCenterIdQuery, [id], (err, result) => {
-    if (err || result.length === 0) {
-      console.error("Fetch center_id error:", err);
-      req.flash('error', 'Stall not found.');
-      return res.redirect('/hawker-centers'); // If no stall is found, redirect
-    }
 
-    const centerId = result[0].center_id;
-
-    // Step 2: Perform the update
-    const sqlUpdateStall = `
-      UPDATE stalls
-      SET name = ?, location = ?, cuisine_type = ?, image_url = ?
-      WHERE id = ?
-    `;
-
-    connection.query(sqlUpdateStall, [name, location, cuisine_type, image_url, id], (updateErr) => {
-      if (updateErr) {
-        console.error("Update Error:", updateErr.message);
-        req.flash('error', 'Failed to update stall.');
-        return res.redirect(`/edit-stall/${id}`);
-      }
-
-      req.flash('success', 'Stall updated successfully!');
-      // Step 3: Redirect to the hawker center's stall list
-      res.redirect(`/view-stalls/${centerId}`); // Use the correct centerId for redirection
+app.post('/hawker-centers/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const { name, address, facilities, image_url } = req.body;
+    const sql = 'UPDATE hawker_centers SET name = ?, address = ?, facilities = ?, image_url = ? WHERE id = ?';
+    connection.query(sql, [name, address, facilities, image_url, req.params.id], (err) => {
+        if (err) throw err;
+        res.redirect('/hawker-centers');
     });
-  });
 });
-
 
 // Delete center (admin only)
 app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
@@ -311,6 +285,24 @@ app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res
         res.redirect('/hawker-centers');
     });
 });
+
+// Route to display all stalls for a specific hawker center
+app.get('/view-stalls/:centerId', (req, res) => {
+    const centerId = req.params.centerId; // Get the center ID from the URL
+    const sqlQuery = 'SELECT * FROM stalls WHERE center_id = ?'; // Query stalls by center_id
+    
+    connection.query(sqlQuery, [centerId], (err, result) => {
+        if (err) {
+            console.log(err);
+            req.flash('error', 'Error fetching stalls');
+            return res.redirect('/');
+        }
+
+        // Render the page with the filtered stalls
+        res.render('view-stalls', { stalls: result });
+    });
+});
+
 
 
 // Route to display all stalls for a specific hawker center
@@ -333,33 +325,33 @@ app.get('/view-stalls/:centerId', (req, res) => {
 // Add Stall Route (GET)
 app.get('/stalls/add', checkAuthenticated, (req, res) => {
     if (req.session.user && req.session.user.role === 'admin') {
-        res.render('add', {
-            messages: req.flash('success'),
-            errors: req.flash('error'),
-            user: req.session.user.role
-        });
+        res.render('addStall');
     } else {
         req.flash('error', 'Only admin can add stalls');
         res.redirect('/hawker-centers');
     }
 });
 
-app.post('/stalls/add', checkAuthenticated, checkAdmin, (req, res) => {
-    const { name, location, cuisine_type, center_id, image_url } = req.body;
-
-    const sql = 'INSERT INTO stalls (name, location, cuisine_type, center_id, image_url) VALUES (?, ?, ?, ?, ?)';
-    
-    connection.query(sql, [name, location, cuisine_type, center_id, image_url], (err, result) => {
-        if (err) {
-            console.error('Error adding stall:', err);
-            req.flash('error', 'Failed to add stall');
-            return res.redirect('/stalls/add');
-        }
-
-        req.flash('success', 'Stall added successfully');
-        res.redirect('/hawker-centers');
-    });
+app.post('/stalls/add', (req, res) => {
+    if (req.session.user && req.session.user.role === 'admin') {
+        const { name, location, description } = req.body;
+        const sql = 'INSERT INTO stalls (name, location, description) VALUES (?, ?, ?)';
+        connection.query(sql, [name, location, description], (err, result) => {
+            if (err) {
+                console.error('Error adding stall:', err);
+                req.flash('error', 'Failed to add stall');
+                return res.redirect('/stalls/add');
+            }
+            req.flash('success', 'Stall added successfully');
+            res.redirect('/hawker-centers');
+        });
+    } else {
+        req.flash('error', 'Unauthorized access');
+        res.redirect('/login');
+    }
 });
+
+
 
 // Edit Stall Details (GET)
 app.get('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
@@ -369,7 +361,7 @@ app.get('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
     connection.query(sqlGetStall, [id], (err, result) => {
         if (err || result.length === 0) {
             req.flash('error', 'Stall not found.');
-             res.redirect(`/view-stalls/${centerId}`); 
+            return res.redirect('/admin');
         }
 
         res.render('edit', {
@@ -399,30 +391,24 @@ app.post('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
         }
 
         req.flash('success', 'Stall updated successfully!');
-         res.redirect(`/view-stalls/${centerId}`); 
+        res.redirect('/admin');
     });
 });
 
+// Deleting a Stall
+app.post('/delete-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const { id } = req.params;
+    const sqlDeleteStall = 'DELETE FROM stalls WHERE id = ?';
+    connection.query(sqlDeleteStall, [id], (err, result) => {
+        if (err) {
+            req.flash('error', 'Failed to delete stall.');
+            return res.redirect('/admin');
+        }
 
-
-app.post('/hawker-stalls/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
-  const { id } = req.params;
-  const sql = 'DELETE FROM stalls WHERE id = ?';
-
-  connection.query(sql, [id], (err, result) => {
-    if (err) {
-      console.error('Delete Error:', err.message);
-      req.flash('error', 'Failed to delete stall.');
-      return res.redirect('/hawker-centers');
-    }
-
-    req.flash('success', 'Stall deleted successfully!');
-    res.redirect('/hawker-centers');
-  });
+        req.flash('success', 'Stall deleted successfully!');
+        res.redirect('/admin');
+    });
 });
-
-
-
 
 
 app.get('/reviews', checkAuthenticated,(req, res) => {
@@ -537,114 +523,105 @@ app.get('/deletereview/:id', (req, res) => {
     });
 });
 
-app.get('/foodItems', checkAuthenticated, (req, res) => {
-    const { name, minPrice, maxPrice } = req.query;
-    let sql = 'SELECT * FROM food_items WHERE 1=1';
-    const params = [];
+// Route to display food items for a specific stall
+app.get('/foodItems/:stallId', (req, res) => {
+    const stallId = req.params.stallId;  // Get the stall ID from the URL
 
-    if (name) {
-        sql += ' AND name LIKE ?';
-        params.push(`%${name}%`);
-    }
-
-    if (minPrice) {
-        sql += ' AND price >= ?';
-        params.push(minPrice);
-    }
-
-    if (maxPrice) {
-        sql += ' AND price <= ?';
-        params.push(maxPrice);
-    }
-
-    connection.query(sql, params, (err, results) => {
+    // Query to fetch food items for the specific stall
+    const sqlQuery = 'SELECT * FROM food_items WHERE stall_id = ?';
+    connection.query(sqlQuery, [stallId], (err, results) => {
         if (err) {
-            console.error('Error fetching filtered food items:', err);
+            console.error('Error fetching food items for stall:', err);
             return res.status(500).send('Internal Server Error');
         }
 
+        if (results.length === 0) {
+            // If no results, display message
+            return res.status(404).send('No food items found for this stall');
+        }
+
+        // Render the foodItems page with the results and stallId
         res.render('foodItems', {
-            foodItems: results,
-            userRole: req.session.user?.role || null,
-            query: req.query // pass current filter values back to EJS
+            foodItems: results,   // List of food items for the stall
+            stallId: stallId,     // Pass the stallId to the view
+            userRole: req.session.user?.role || null,  // User role for role-based content
         });
     });
 });
 
-
-app.get('/food/:id', checkAuthenticated, (req, res) => {
-    const id = req.params.id;
-    connection.query('SELECT * FROM food_items WHERE id = ?', [id], (err, results) => {
-        if (err || results.length === 0) return res.status(404).send('Food item not found');
-        res.render('foodItems', { food: results[0], userRole: req.session.user.role });
-    });
+// Route to display the form for adding a new food item for a specific stall
+app.get('/addFood/:stallId', checkAuthenticated, checkAdmin, (req, res) => {
+    const stallId = req.params.stallId;  // Capture stallId from URL
+    res.render('addFood', { stallId: stallId });  // Pass stallId to the form
 });
 
-// Food item routes (Admin-only)
-app.get('/addFood', checkAuthenticated, checkAdmin, (req, res) => {
-    res.render('addFood');
-});
+// Route to handle adding a new food item for a specific stall
+app.post('/addFood/:stallId', checkAuthenticated, checkAdmin, upload.single('image'), (req, res) => {
+    const { name, price, description, stall_id, imageUrl } = req.body;
+    const image = req.file ? `/images/${req.file.filename}` : imageUrl;  // Handle image upload
 
-app.post('/addFood', upload.single('image'), (req, res) => {
-    const { name, price, description, stall_id, imageUrl } = req.body; // Added missing fields
-    let image;
-
-    if (imageUrl && imageUrl.trim() !== "") {
-        image = imageUrl.trim(); // Use external link
-    } else if (req.file) {
-        image = `/images/${req.file.filename}`; // Use uploaded file path
-    } else {
-        image = null;
-    }
-
-    // Fixed SQL to match your form fields
-    const sql = 'INSERT INTO food_items (name, price, description, stall_id, image_url) VALUES ( ?, ?, ?, ?, ?)';
+    // Insert food item into the database
+    const sql = 'INSERT INTO food_items (name, price, description, stall_id, image_url) VALUES (?, ?, ?, ?, ?)';
     connection.query(sql, [name, price, description, stall_id, image], (err) => {
         if (err) {
             console.error('Error inserting food item:', err);
             req.flash('error', 'Failed to add food item');
-            return res.redirect('/foodItems'); 
-        } else {
-            req.flash('success', 'Food item added successfully');
-            res.redirect('/foodItems'); 
+            return res.redirect(`/addFood/${stall_id}`);
         }
+        req.flash('success', 'Food item added successfully');
+        res.redirect(`/foodItems/${stall_id}`);  // Redirect to the food items page for that stall
     });
 });
 
+// Route to display the form for editing an existing food item
 app.get('/editFood/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const id = req.params.id;
-    connection.query('SELECT * FROM food_items WHERE id = ?', [id], (err, results) => {
-        if (err || results.length === 0) return res.status(404).send('Not Found');
+    const id = req.params.id;  // Get the food item ID from the URL
+    const sqlGetFood = 'SELECT * FROM food_items WHERE id = ?';
+
+    connection.query(sqlGetFood, [id], (err, result) => {
+        if (err || result.length === 0) {
+            req.flash('error', 'Food item not found.');
+            return res.redirect('/foodItems');
+        }
 
         res.render('editFood', {
-            food: results[0],
-            messages: req.flash('error') 
+            food: result[0],   // Pass the food item data to the view
+            flash: req.flash()  // Flash messages for error/success
         });
     });
 });
 
+// Route to handle updating an existing food item
 app.post('/editFood/:id', checkAuthenticated, checkAdmin, upload.single('image'), (req, res) => {
-    const id = req.params.id;
+    const id = req.params.id;  // Get the food item ID from the URL
     const { name, price, description, stall_id, currentImage } = req.body;
-    const image = req.file ? req.file.filename : currentImage;
+    const image = req.file ? `/images/${req.file.filename}` : currentImage;  // Handle image upload
 
-    const sql = 'UPDATE food_items SET name = ?, price = ?, description = ?, stall_id = ?, image_url = ? WHERE id = ?';
-    connection.query(sql, [name, price, description, stall_id, image, id], (err) => {
+    const sqlUpdateFood = 'UPDATE food_items SET name = ?, price = ?, description = ?, stall_id = ?, image_url = ? WHERE id = ?';
+    connection.query(sqlUpdateFood, [name, price, description, stall_id, image, id], (err) => {
         if (err) {
             req.flash('error', 'Failed to update food item.');
             return res.redirect(`/editFood/${id}`);
         }
 
         req.flash('success', 'Food item updated successfully!');
-        res.redirect('/foodItems');
+        res.redirect(`/foodItems/${stall_id}`);  // Redirect back to the food items page for the stall
     });
 });
 
-app.get('/deleteFood/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const id = req.params.id;
-    connection.query('DELETE FROM food_items WHERE id = ?', [id], (err) => {
-        if (err) return res.status(500).send('Delete error');
-        res.redirect('/foodItems');
+// Route to handle deleting a food item
+app.post('/deleteFood/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const id = req.params.id;  // Get the food item ID from the URL
+    const sqlDeleteFood = 'DELETE FROM food_items WHERE id = ?';
+
+    connection.query(sqlDeleteFood, [id], (err) => {
+        if (err) {
+            req.flash('error', 'Failed to delete food item.');
+            return res.redirect('/foodItems');
+        }
+
+        req.flash('success', 'Food item deleted successfully!');
+        res.redirect('/foodItems');  // Redirect back to the food items list
     });
 });
 

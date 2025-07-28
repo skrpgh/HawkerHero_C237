@@ -114,7 +114,7 @@
                             <h5 class="card-title"><%= stall.name %></h5>
                             <p class="card-text"><strong>Cuisine:</strong> <%= stall.cuisine_type %></p>
                             <p class="card-text"><strong>Location:</strong> <%= stall.location %></p>
-                            <a href="/view-stall/<%= stall.id %>" class="btn btn-primary">View Details</a>
+                            <a href="/foodItems/<%=stall.id%>" class="btn btn-primary">View Stall</a>
                             <a href="/edit-stall/<%= stall.id %>" class="btn btn-warning btn-sm">Edit</a>
                             <!-- Delete Button -->
                             <form action="/hawker-stalls/delete/<%= stall.id %>" method="POST" style="display:inline;">
