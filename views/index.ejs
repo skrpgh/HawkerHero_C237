@@ -1,61 +1,90 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>HakerHero</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <meta charset="UTF-8">
+  <title>Hawker Hero</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <style>
+    body {
+      background-color: #f9f9f9;
+    }
+
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-brand {
+      font-weight: bold;
+      font-size: 1.4rem;
+      color: #f8d14d !important;
+    }
+
+    .nav-link {
+      transition: color 0.2s ease;
+    }
+
+    .nav-link:hover {
+      color: #ffc107 !important;
+    }
+
+    .dropdown-menu {
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-banner {
+      padding: 60px 20px;
+      text-align: center;
+      background: linear-gradient(135deg, #fbb034, #ffdd00);
+      color: #fff;
+      border-radius: 12px;
+      margin-top: 30px;
+    }
+
+    .hero-banner h1 {
+      font-size: 3rem;
+      font-weight: 700;
+    }
+
+    .hero-banner p {
+      font-size: 1.2rem;
+    }
+  </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/">Hawker Hero</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
-      <span class="navbar-toggler-icon"></span>
-    </button>
 
-    <div class="collapse navbar-collapse" id="collapsibleNavbar">
-      <!-- Left-aligned nav items -->
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="/">Home</a>
-        </li>
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Hawker Hero</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-        <!-- Modules Dropdown -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-            Modules
-          </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="/foodItems">Food Items</a></li>
-            <li><a class="dropdown-item" href="/reviews">Reviews</a></li>
-            <li><a class="dropdown-item" href="/recommendations">Recommendations</a></li>
-            <li><a class="dropdown-item" href="/hawker-centers">Hawker Centers</a></li>
-            <li><a class="dropdown-item" href="/view-stalls">Hawker Stalls</a></li>
-            <li><a class="dropdown-item" href="/favorite">Favorites</a></li>
-          </ul>
-        </li>
-
-        <% if (userRole === 'admin') { %>
+      <div class="collapse navbar-collapse" id="collapsibleNavbar">
+        <!-- Left Nav Items -->
+        <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <a class="nav-link" href="/admin">Admin Panel</a>
+            <a class="nav-link" href="/">Home</a>
           </li>
-        <% } %>
-      </ul>
 
-      <!-- Right-aligned Profile Dropdown -->
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
-            <i class="bi bi-person-circle"></i> Settings
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="/profile">Profile Settings</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
-          </ul>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
-
+          <!-- Dropdown: Modules -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+              Modules
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="/foodItems">Food Items</a></li>
+              <li><a class="dropdown-item" href="/reviews">Reviews</a></li>
+              <li><a class="dropdown-item" href="/recommendations">Recommendations</a></li>
+              <li><a class="dropdown-item" href="/hawker-centers">Hawker Centers</a></li>
+              <li><a class="dropdown-item" href="/view-stalls">Hawker Stalls</a></li>
+              <li><a class="dropd
