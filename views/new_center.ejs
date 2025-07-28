@@ -86,35 +86,42 @@
     </div>
   </div>
 </nav>
-<div class="container mt-5">
-    <h1>Add New Hawker Center</h1>
-    <% if (messages && messages.length > 0) { %>
-        <div class="alert alert-danger">
-            <% messages.forEach(function(message) { %>
-                <p><%= message %></p>
-            <% }); %>
-        </div>
-    <% } %>
-    <form method="POST" action="/hawker-centers/new">
-        <div class="form-group">
-            <label>Name:</label>
-            <input type="text" name="name" class="form-control" required>
-        </div>
-        <div class="form-group">
-            <label>Address:</label>
-            <input type="text" name="address" class="form-control" required>
-        </div>
-        <div class="form-group">
-            <label>Facilities:</label>
-            <textarea name="facilities" class="form-control"></textarea>
-        </div>
-        <div class="form-group">
-            <label for="image">Food Image</label>
-                <input type="file" class="form-control" id="image" name="image" accept="image/*">
-        </div>
-        <button type="submit" class="btn btn-success">Create</button>
-        <a href="/hawker-centers" class="btn btn-secondary">Cancel</a>
-    </form>
-</div>
+  <div class="container mt-5">
+      <h1 class="mb-4">Hawker Centers</h1>
+
+      <% if (centers.length === 0) { %>
+          <p>No hawker centers available.</p>
+      <% } else { %>
+          <table class="table table-bordered">
+              <thead>
+                  <tr>
+                      <th>Name</th>
+                      <th>Address</th>
+                      <th>Facilities</th>
+                      <th>Actions</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <% centers.forEach(center => { %>
+                      <tr>
+                          <td><%= center.name %></td>
+                          <td><%= center.address %></td>
+                          <td><%= center.facilities %></td>
+                          <td>
+                              <a href="/view-stalls/<%= center.id %>" class="btn btn-primary">View Stalls</a>
+                              <% if (userRole === 'admin') { %>
+                                  <a href="/edit-hawker-center/<%= center.id %>" class="btn btn-warning btn-sm">Edit</a>
+                                  <form action="/delete-hawker-center/<%= center.id %>" method="POST" style="display:inline;">
+                                      <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                  </form>
+                              <% } %>
+                          </td>
+                      </tr>
+                  <% }) %>
+              </tbody>
+          </table>
+      <% } %>
+  </div>
+
 </body>
 </html>

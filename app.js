@@ -179,9 +179,11 @@ app.get('/hawker-centers', checkAuthenticated, (req, res) => {
     }
 
     // ✅ RENDER the EJS page and PASS the user + results
-    res.render('hawker_centers', {
-      centers: results,
-      user: req.session.user || null
+        // Pass both centers and user data to the view
+        res.render('hawker_centers', {
+            centers: results,  // List of hawker centers
+            user: user,         // Pass user object to the view
+            userRole: user ? user.role : null  // Pass user role (if available
     });
   });
 });
@@ -215,22 +217,19 @@ app.post('/hawker-centers/search', checkAuthenticated, (req, res) => {
 });
 
 // Add new center (admin only)
-app.get('/hawker-centers/new', checkAuthenticated, checkAdmin, (req, res) => {
-    res.render('new_center', { user: req.session.user, messages: req.flash('error') });
-});
-
 app.post('/hawker-centers/new', checkAuthenticated, checkAdmin, upload.single('image'), (req, res) => {
     const { name, address, facilities, imageUrl } = req.body;
     let image;
 
     if (imageUrl && imageUrl.trim() !== "") {
-        image = imageUrl.trim(); // External link
+        image = imageUrl.trim();  // External link for image
     } else if (req.file) {
-        image = `/uploads/${req.file.filename}`; // Uploaded file (adjust path if needed)
+        image = `/uploads/${req.file.filename}`;  // Uploaded file path
     } else {
         image = null;
     }
 
+    // Ensure name and address are provided
     if (!name || !address) {
         req.flash('error', 'Name and address are required.');
         return res.redirect('/hawker-centers/new');
@@ -248,20 +247,8 @@ app.post('/hawker-centers/new', checkAuthenticated, checkAdmin, upload.single('i
         }
     });
 });
-
 // Edit center (admin only)
-app.get('/hawker-centers', checkAuthenticated, (req, res) => {
-    const sql = 'SELECT * FROM hawker_centers';
-    connection.query(sql, (err, results) => {
-        if (err) {
-            console.error('Error retrieving hawker centers:', err);
-            return res.status(500).send('Failed to retrieve hawker centers');
-        }
 
-        // Pass both centers and user data to the view
-        res.render('hawker_centers', { centers: results, user: req.session.user });
-    });
-});
 
 
 app.post('/hawker-centers/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
@@ -286,7 +273,7 @@ app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res
     });
 });
 
-<<<<<<< HEAD
+
 // Route to display all stalls for a specific hawker center
 app.get('/view-stalls/:centerId', (req, res) => {
     const centerId = req.params.centerId; // Get the center ID from the URL
@@ -305,7 +292,7 @@ app.get('/view-stalls/:centerId', (req, res) => {
 });
 
 
-=======
+
 app.get('/view-stalls', checkAuthenticated, (req, res) => {
   const sql = 'SELECT * FROM stalls';
   connection.query(sql, (err, results) => {
@@ -321,7 +308,6 @@ app.get('/view-stalls', checkAuthenticated, (req, res) => {
     });
   });
 });
->>>>>>> bdc7b417158a40fa969c4726464880efae583f73
 
 // Route to display all stalls for a specific hawker center
 app.get('/view-stalls/:centerId', (req, res) => {
@@ -350,7 +336,6 @@ app.get('/stalls/add', checkAuthenticated, (req, res) => {
     }
 });
 
-<<<<<<< HEAD
 app.post('/stalls/add', (req, res) => {
     if (req.session.user && req.session.user.role === 'admin') {
         const { name, location, description } = req.body;
@@ -368,7 +353,7 @@ app.post('/stalls/add', (req, res) => {
         req.flash('error', 'Unauthorized access');
         res.redirect('/login');
     }
-=======
+});
 app.post('/stalls/add', checkAuthenticated, checkAdmin, (req, res) => {
     const { name, location, cuisine_type, center_id, image_url } = req.body;
 
@@ -384,7 +369,6 @@ app.post('/stalls/add', checkAuthenticated, checkAdmin, (req, res) => {
         req.flash('success', 'Stall added successfully');
         res.redirect('/view-stalls');
     });
->>>>>>> bdc7b417158a40fa969c4726464880efae583f73
 });
 
 
@@ -441,11 +425,10 @@ app.post('/delete-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
             return res.redirect('/admin');
         }
 
-<<<<<<< HEAD
         req.flash('success', 'Stall deleted successfully!');
         res.redirect('/admin');
     });
-=======
+});
 
 app.post('/hawker-stalls/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
   const { id } = req.params;
@@ -461,7 +444,6 @@ app.post('/hawker-stalls/delete/:id', checkAuthenticated, checkAdmin, (req, res)
     req.flash('success', 'Stall deleted successfully!');
     res.redirect('/view-stalls/:id');
   });
->>>>>>> bdc7b417158a40fa969c4726464880efae583f73
 });
 
 
@@ -577,91 +559,59 @@ app.get('/deletereview/:id', (req, res) => {
     });
 });
 
-<<<<<<< HEAD
 // Route to display food items for a specific stall
-app.get('/foodItems/:stallId', (req, res) => {
+// Route to display food items for a specific stall
+app.get('/foodItems/:stallId', checkAuthenticated, (req, res) => {
     const stallId = req.params.stallId;  // Get the stall ID from the URL
 
     // Query to fetch food items for the specific stall
     const sqlQuery = 'SELECT * FROM food_items WHERE stall_id = ?';
     connection.query(sqlQuery, [stallId], (err, results) => {
-=======
-app.get('/foodItems', checkAuthenticated, (req, res) => {
-    const { name, minPrice, maxPrice, stallId } = req.query;
-    let sql = 'SELECT * FROM food_items WHERE 1=1';
-    const params = [];
-
-    // Filter by food name if provided
-    if (name) {
-        sql += ' AND name LIKE ?';
-        params.push(`%${name}%`);
-    }
-
-    // Filter by price range if provided
-    if (minPrice) {
-        sql += ' AND price >= ?';
-        params.push(minPrice);
-    }
-
-    if (maxPrice) {
-        sql += ' AND price <= ?';
-        params.push(maxPrice);
-    }
-
-    // Filter by stallId if provided
-    if (stallId) {
-        sql += ' AND stall_id = ?'; // Assuming `stall_id` is the foreign key in `food_items` table
-        params.push(stallId);
-    }
-
-    connection.query(sql, params, (err, results) => {
->>>>>>> bdc7b417158a40fa969c4726464880efae583f73
         if (err) {
             console.error('Error fetching food items for stall:', err);
             return res.status(500).send('Internal Server Error');
         }
 
         if (results.length === 0) {
-            // If no results, display message
             return res.status(404).send('No food items found for this stall');
         }
 
         // Render the foodItems page with the results and stallId
         res.render('foodItems', {
-<<<<<<< HEAD
             foodItems: results,   // List of food items for the stall
             stallId: stallId,     // Pass the stallId to the view
             userRole: req.session.user?.role || null,  // User role for role-based content
-=======
-            foodItems: results,
-            userRole: req.session.user?.role || null,
             query: req.query // Pass current filter values back to EJS
->>>>>>> bdc7b417158a40fa969c4726464880efae583f73
         });
     });
 });
 
 // Route to display the form for adding a new food item for a specific stall
 app.get('/addFood/:stallId', checkAuthenticated, checkAdmin, (req, res) => {
-    const stallId = req.params.stallId;  // Capture stallId from URL
-    res.render('addFood', { stallId: stallId });  // Pass stallId to the form
+    const stallId = req.params.stallId;
+    res.render('addFood', { 
+        stallId: stallId,  // Pass the stallId to the form
+        flash: req.flash()  // Pass flash messages to the view
+    });
 });
+
 
 // Route to handle adding a new food item for a specific stall
 app.post('/addFood/:stallId', checkAuthenticated, checkAdmin, upload.single('image'), (req, res) => {
-    const { name, price, description, stall_id, imageUrl } = req.body;
+    const { name, price, description, imageUrl } = req.body;
+    const stallId = req.params.stallId;  // Get the stall ID from the URL
     const image = req.file ? `/images/${req.file.filename}` : imageUrl;  // Handle image upload
 
     // Insert food item into the database
     const sql = 'INSERT INTO food_items (name, price, description, stall_id, image_url) VALUES (?, ?, ?, ?, ?)';
-    connection.query(sql, [name, price, description, stall_id, image], (err) => {
+    connection.query(sql, [name, price, description, stallId, image], (err) => {
         if (err) {
             console.error('Error inserting food item:', err);
             req.flash('error', 'Failed to add food item');
-            return res.redirect(`/addFood/${stall_id}`);
+            return res.redirect(`/addFood/${stallId}`);
         }
         req.flash('success', 'Food item added successfully');
-        res.redirect(`/foodItems/${stall_id}`);  // Redirect to the food items page for that stall
+        res.redirect(`/foodItems/${stallId}`);  // Redirect to the food items page for that stall
     });
 });
 
@@ -713,10 +663,9 @@ app.post('/deleteFood/:id', checkAuthenticated, checkAdmin, (req, res) => {
         }
 
         req.flash('success', 'Food item deleted successfully!');
-        res.redirect('/foodItems');  // Redirect back to the food items list
+        res.redirect('/foodItems/$[stallId]');  // Redirect back to the food items list
     });
 });
-
 
 app.get('/recommendations', checkAuthenticated, (req, res) => {
     const search = req.query.search || '';
@@ -868,17 +817,29 @@ app.get('/favorite', checkAuthenticated, (req, res) => {
 
 // Define routes
 app.get('/favorite', checkAuthenticated, (req, res) => {
-    const sql = 'SELECT * FROM favorites';
-    // Fetch data from MySQL
-    connection.query(sql, (error, results) => {
-        if (error) {
-            console.error('Database query error:', error.message);
+    const userId = req.session.user.id;  // Assuming you're using the logged-in user's ID from the session
+
+    // Query to fetch favorite data for the logged-in user
+    const sqlQuery = 'SELECT * FROM favorites WHERE user_id = ?';
+
+    connection.query(sqlQuery, [userId], (err, results) => {
+        if (err) {
+            console.error('Error fetching favorites:', err);
             return res.status(500).send('Error Retrieving favorites');
         }
-    // Render HTML page with data
-    res.render('favorite', {favorites: results, user: req.session.user, messages: req.flash('success')});
+
+        if (results.length === 0) {
+            return res.render('favorite', { favorite: null });  // Render with null if no favorites found
+        }
+
+        // Pass the favorite data to the EJS view
+        res.render('favorite', {
+            favorite: results[0],  // Assuming only one favorite per user
+            userRole: req.session.user?.role || null  // Optional: User role for role-based content
+        });
     });
 });
+
 
 // Search route
 app.get('/search', (req, res) => {
@@ -935,24 +896,29 @@ app.post('/hawker/favorite/:id', checkAuthenticated, (req, res) => {
     });
 });
 
-app.get('/favorite/:id', checkAuthenticated, (req, res) => {
-    const favoriteId = req.params.id;  // Get the ID from the URL
-    const userId = req.session.user.id; // Get the logged-in user's ID from the session
+app.get('/favorite', checkAuthenticated, (req, res) => {
+    const userId = req.session.user.id;  // Assuming you're using the logged-in user's ID from the session
 
-    // Query to retrieve the favorite from the database
-    const sql = 'SELECT * FROM favorites WHERE id = ? AND user_id = ?';
-    connection.query(sql, [favoriteId, userId], (err, results) => {
+    // Query to fetch the favorite data for the logged-in user
+    const sqlQuery = 'SELECT * FROM favorites WHERE user_id = ?';
+
+    connection.query(sqlQuery, [userId], (err, results) => {
         if (err) {
-            console.error('Error fetching favorite:', err);
-            return res.status(500).send('Error fetching favorite');
+            console.error('Error fetching favorites:', err);
+            req.flash('error', 'Failed to load favorite items');
+            return res.redirect('/');
         }
 
-        if (results.length > 0) {
-            // Send the favorite data to the view
-            res.render('favorite', { favorite: results[0], userRole: req.session.user.role });
-        } else {
-            res.status(404).send('Favorite not found');
+        if (results.length === 0) {
+            req.flash('error', 'No favorite found');
+            return res.render('favorite', { favorite: null });
         }
+
+        // Pass the favorite data to the EJS view
+        res.render('favorite', {
+            favorite: results[0],  // Assuming only one favorite per user
+            flash: req.flash()  // Pass flash messages to the view
+        });
     });
 });
 
