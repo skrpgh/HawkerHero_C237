@@ -1,86 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>HawkerHero</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HawkerHero - Favorite Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        /* Page background color */
+        body {
+            background-color: #f7f7f7;
+        }
+
+        /* Container background, padding, and box-shadow */
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Centered header color */
+        .text-center h2 {
+            color: #c2410c;
+        }
+
+        /* Text color */
+        h2, p {
+            color: #333333;
+        }
+
+        /* Back button styling */
+        .btn-back {
+            margin-top: 20px;
+        }
+
+        /* Optional styling for paragraphs */
+        .details p {
+            font-size: 1.2rem;
+        }
+    </style>
 </head>
+
 <body>
-  <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/">Hawker Hero</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
-      <span class="navbar-toggler-icon"></span>
-    </button>
 
-    <div class="collapse navbar-collapse" id="collapsibleNavbar">
-      <!-- Left-aligned nav items -->
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="/">Home</a>
-        </li>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Hawker Hero</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="collapsibleNavbar">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <!-- Add other menu items here -->
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-        <!-- Modules Dropdown -->
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-            Modules
-          </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="/foodItems">Food Items</a></li>
-            <li><a class="dropdown-item" href="/reviews">Reviews</a></li>
-            <li><a class="dropdown-item" href="/recommendations">Recommendations</a></li>
-            <li><a class="dropdown-item" href="/hawker-centers">Hawker Centers</a></li>
-            <li><a class="dropdown-item" href="/view-stalls">Hawker Stalls</a></li>
-            <li><a class="dropdown-item" href="/favorite">Favorites</a></li>
-          </ul>
-        </li>
+    <!-- Main Content -->
+    <div class="container">
+        <br>
+        <!-- Title -->
+        <div class="text-center">
+            <h2>Favorite Details</h2>
+        </div>
+        <br>
 
-        <% if (userRole === 'admin') { %>
-          <li class="nav-item">
-            <a class="nav-link" href="/admin">Admin Panel</a>
-          </li>
+        <!-- Check if favorite data exists -->
+        <% if (favorite) { %>
+            <!-- Display Favorite Data -->
+            <div class="details">
+                <p><b>Username:</b> <%= favorite.username %></p>
+                <p><b>Stall:</b> <%= favorite.stall %></p>
+                <p><b>Food:</b> <%= favorite.food %></p>
+                <p><b>Notes:</b> <%= favorite.notes %></p>
+
+                <!-- Display Created At Date -->
+                <p><b>Created At:</b> 
+                    <% if (favorite.created_at) { %>
+                        <%= new Date(favorite.created_at).toISOString().split('T')[0] %> 
+                    <% } else { %>
+                        N/A
+                    <% } %>
+                </p>
+            </div>
+        <% } else { %>
+            <!-- No favorite found message -->
+            <p>No favorite found.</p>
         <% } %>
-      </ul>
 
-      <!-- Right-aligned Profile Dropdown -->
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
-            <i class="bi bi-person-circle"></i> Settings
-          </a>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="/profile">Profile Settings</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
-          </ul>
-        </li>
-      </ul>
+        <!-- Back Button -->
+        <a href="/" class="btn btn-secondary btn-back">Back</a>
     </div>
-  </div>
-</nav>
-  
-  <div class="container">
-    <br>
-    <div class="text-center"><h2>Favorite Details</h2></div>
-    <br>
-    <% if (favorite) { %> <!-- Check if favorite data exists -->
-      <div>
-        <p><b>Username:</b><br> <%= favorites.username %></p>
-        <p><b>Stall:</b><br> <%= favorites.stall %></p>
-        <p><b>Food:</b><br> <%= favorites.food %></p>
-        <p><b>Notes:</b><br> <%= Favorites.notes %></p>
-        <p><b>Created At:</b><br>
-          <% if (favorites.created_at) { %>
-            <%= new Date(favorites.created_at).toISOString().split('T')[0] %>
-            <% } else { %>
-              N/A
-            <% } %>
-      </div>
-      <% } else { %>
-        <p>No favorite found.</p>
-      <% } %>
-      <a href ="/" class="btn btn-secondary mt-3">Back</a>
-  </div>
 
 </body>
 </html>
