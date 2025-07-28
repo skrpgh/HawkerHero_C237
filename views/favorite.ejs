@@ -30,13 +30,13 @@
     <br>
     <% if (favorite) { %> <!-- Check if favorite data exists -->
       <div>
-        <p><b>Username:</b><br> <%= favorite.username %></p>
-        <p><b>Stall:</b><br> <%= favorite.stall %></p>
-        <p><b>Food:</b><br> <%= favorite.food %></p>
-        <p><b>Notes:</b><br> <%= favorite.notes %></p>
+        <p><b>Username:</b><br> <%= favorites.username %></p>
+        <p><b>Stall:</b><br> <%= favorites.stall %></p>
+        <p><b>Food:</b><br> <%= favorites.food %></p>
+        <p><b>Notes:</b><br> <%= Favorites.notes %></p>
         <p><b>Created At:</b><br>
-          <% if (favorite.created_at) { %>
-            <%= new Date(favorite.created_at).toISOString().split('T')[0] %>
+          <% if (favorites.created_at) { %>
+            <%= new Date(favorites.created_at).toISOString().split('T')[0] %>
             <% } else { %>
               N/A
             <% } %>
