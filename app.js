@@ -262,16 +262,42 @@ app.get('/hawker-centers', checkAuthenticated, (req, res) => {
         res.render('hawker_centers', { centers: results, user: req.session.user });
     });
 });
+app.post('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
+  const { id } = req.params;
+  const { name, location, cuisine_type, image_url } = req.body;
 
+  // Step 1: Get the center_id before updating the stall
+  const getCenterIdQuery = 'SELECT center_id FROM stalls WHERE id = ?';
+  connection.query(getCenterIdQuery, [id], (err, result) => {
+    if (err || result.length === 0) {
+      console.error("Fetch center_id error:", err);
+      req.flash('error', 'Stall not found.');
+      return res.redirect('/hawker-centers'); // If no stall is found, redirect
+    }
 
-app.post('/hawker-centers/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const { name, address, facilities, image_url } = req.body;
-    const sql = 'UPDATE hawker_centers SET name = ?, address = ?, facilities = ?, image_url = ? WHERE id = ?';
-    connection.query(sql, [name, address, facilities, image_url, req.params.id], (err) => {
-        if (err) throw err;
-        res.redirect('/hawker-centers');
+    const centerId = result[0].center_id;
+
+    // Step 2: Perform the update
+    const sqlUpdateStall = `
+      UPDATE stalls
+      SET name = ?, location = ?, cuisine_type = ?, image_url = ?
+      WHERE id = ?
+    `;
+
+    connection.query(sqlUpdateStall, [name, location, cuisine_type, image_url, id], (updateErr) => {
+      if (updateErr) {
+        console.error("Update Error:", updateErr.message);
+        req.flash('error', 'Failed to update stall.');
+        return res.redirect(`/edit-stall/${id}`);
+      }
+
+      req.flash('success', 'Stall updated successfully!');
+      // Step 3: Redirect to the hawker center's stall list
+      res.redirect(`/view-stalls/${centerId}`); // Use the correct centerId for redirection
     });
+  });
 });
+
 
 // Delete center (admin only)
 app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
@@ -285,24 +311,6 @@ app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res
         res.redirect('/hawker-centers');
     });
 });
-
-// Route to display all stalls for a specific hawker center
-app.get('/view-stalls/:centerId', (req, res) => {
-    const centerId = req.params.centerId; // Get the center ID from the URL
-    const sqlQuery = 'SELECT * FROM stalls WHERE center_id = ?'; // Query stalls by center_id
-    
-    connection.query(sqlQuery, [centerId], (err, result) => {
-        if (err) {
-            console.log(err);
-            req.flash('error', 'Error fetching stalls');
-            return res.redirect('/');
-        }
-
-        // Render the page with the filtered stalls
-        res.render('view-stalls', { stalls: result });
-    });
-});
-
 
 
 // Route to display all stalls for a specific hawker center
@@ -325,33 +333,33 @@ app.get('/view-stalls/:centerId', (req, res) => {
 // Add Stall Route (GET)
 app.get('/stalls/add', checkAuthenticated, (req, res) => {
     if (req.session.user && req.session.user.role === 'admin') {
-        res.render('addStall');
+        res.render('add', {
+            messages: req.flash('success'),
+            errors: req.flash('error'),
+            user: req.session.user.role
+        });
     } else {
         req.flash('error', 'Only admin can add stalls');
         res.redirect('/hawker-centers');
     }
 });
 
-app.post('/stalls/add', (req, res) => {
-    if (req.session.user && req.session.user.role === 'admin') {
-        const { name, location, description } = req.body;
-        const sql = 'INSERT INTO stalls (name, location, description) VALUES (?, ?, ?)';
-        connection.query(sql, [name, location, description], (err, result) => {
-            if (err) {
-                console.error('Error adding stall:', err);
-                req.flash('error', 'Failed to add stall');
-                return res.redirect('/stalls/add');
-            }
-            req.flash('success', 'Stall added successfully');
-            res.redirect('/hawker-centers');
-        });
-    } else {
-        req.flash('error', 'Unauthorized access');
-        res.redirect('/login');
-    }
+app.post('/stalls/add', checkAuthenticated, checkAdmin, (req, res) => {
+    const { name, location, cuisine_type, center_id, image_url } = req.body;
+
+    const sql = 'INSERT INTO stalls (name, location, cuisine_type, center_id, image_url) VALUES (?, ?, ?, ?, ?)';
+    
+    connection.query(sql, [name, location, cuisine_type, center_id, image_url], (err, result) => {
+        if (err) {
+            console.error('Error adding stall:', err);
+            req.flash('error', 'Failed to add stall');
+            return res.redirect('/stalls/add');
+        }
+
+        req.flash('success', 'Stall added successfully');
+        res.redirect('/hawker-centers');
+    });
 });
-
-
 
 // Edit Stall Details (GET)
 app.get('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
@@ -361,7 +369,7 @@ app.get('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
     connection.query(sqlGetStall, [id], (err, result) => {
         if (err || result.length === 0) {
             req.flash('error', 'Stall not found.');
-            return res.redirect('/admin');
+             res.redirect(`/view-stalls/${centerId}`); 
         }
 
         res.render('edit', {
@@ -391,24 +399,30 @@ app.post('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
         }
 
         req.flash('success', 'Stall updated successfully!');
-        res.redirect('/admin');
+         res.redirect(`/view-stalls/${centerId}`); 
     });
 });
 
-// Deleting a Stall
-app.post('/delete-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const { id } = req.params;
-    const sqlDeleteStall = 'DELETE FROM stalls WHERE id = ?';
-    connection.query(sqlDeleteStall, [id], (err, result) => {
-        if (err) {
-            req.flash('error', 'Failed to delete stall.');
-            return res.redirect('/admin');
-        }
 
-        req.flash('success', 'Stall deleted successfully!');
-        res.redirect('/admin');
-    });
+
+app.post('/hawker-stalls/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
+  const { id } = req.params;
+  const sql = 'DELETE FROM stalls WHERE id = ?';
+
+  connection.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('Delete Error:', err.message);
+      req.flash('error', 'Failed to delete stall.');
+      return res.redirect('/hawker-centers');
+    }
+
+    req.flash('success', 'Stall deleted successfully!');
+    res.redirect('/hawker-centers');
+  });
 });
+
+
+
 
 
 app.get('/reviews', checkAuthenticated,(req, res) => {
