@@ -171,21 +171,20 @@ app.post('/register', validateRegistration, (req, res) => {
 });
 
 app.get('/hawker-centers', checkAuthenticated, (req, res) => {
-  const sql = 'SELECT * FROM hawker_centers';
-  connection.query(sql, (err, results) => {
-    if (err) {
-      console.error('Error retrieving hawker centers:', err);
-      return res.status(500).send('Failed to retrieve hawker centers');
-    }
+    const sql = 'SELECT * FROM hawker_centers';
+    connection.query(sql, (err, results) => {
+        if (err) {
+            console.error('Error retrieving hawker centers:', err);
+            return res.status(500).send('Failed to retrieve hawker centers');
+        }
 
-    // ✅ RENDER the EJS page and PASS the user + results
-    res.render('hawker_centers', {
-        centers: results,
-        user: req.session.user || null
+        // Correct: Ensure the user object is passed properly to the EJS template
+        res.render('hawker_centers', {
+            centers: results,
+            user: req.session.user || null // Ensure 'user' is passed
+        });
     });
-  });
 });
-
 
 app.get('/hawker-centers/:centerId', (req, res) => {
     const centerId = req.params.centerId;
@@ -214,23 +213,29 @@ app.post('/hawker-centers/search', checkAuthenticated, (req, res) => {
     });
 });
 
+
+app.get('/hawker-centers/new', checkAuthenticated, checkAdmin, (req, res) => {
+    res.render('add-center'); // Render your add-center.ejs form
+});
+
 // Add new center (admin only)
 app.post('/hawker-centers/new', checkAuthenticated, checkAdmin, upload.single('image'), (req, res) => {
-    const { name, address, facilities, imageUrl } = req.body;
+    const { name, address, facilities } = req.body;
     let image;
 
-    if (imageUrl && imageUrl.trim() !== "") {
-        image = imageUrl.trim();  // External link for image
+    // Handle image URL or uploaded file
+    if (req.body.imageUrl && req.body.imageUrl.trim() !== "") {
+        image = req.body.imageUrl.trim(); // External link for image
     } else if (req.file) {
         image = `/uploads/${req.file.filename}`;  // Uploaded file path
     } else {
-        image = null;
+        image = null;  // No image provided
     }
 
-    // Ensure name and address are provided
-    if (!name || !address) {
-        req.flash('error', 'Name and address are required.');
-        return res.redirect('/hawker-centers/new');
+    // Ensure name, address, and facilities are provided
+    if (!name || !address || !facilities) {
+        req.flash('error', 'Name, address, and facilities are required.');
+        return res.redirect('/hawker-centers/new');  // Redirect back to the form if fields are missing
     }
 
     const sql = 'INSERT INTO hawker_centers (name, address, facilities, image_url) VALUES (?, ?, ?, ?)';
@@ -241,7 +246,7 @@ app.post('/hawker-centers/new', checkAuthenticated, checkAdmin, upload.single('i
             return res.redirect('/hawker-centers/new');
         } else {
             req.flash('success', 'Hawker center added successfully.');
-            res.redirect('/hawker-centers');
+            res.redirect('/hawker-centers'); // Redirect to the list of hawker centers after successful submission
         }
     });
 });
