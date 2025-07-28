@@ -15,18 +15,52 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse" id="collapsibleNavbar">
-                <ul class="navbar-nav ms-auto">
+                <!-- Left-aligned nav items -->
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/login">Login</a>
+                        <a class="nav-link" href="/">Home</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/register">Register</a>
+
+                    <!-- Modules Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            Modules
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/foodItems">Food Items</a></li>
+                            <li><a class="dropdown-item" href="/reviews">Reviews</a></li>
+                            <li><a class="dropdown-item" href="/recommendations">Recommendations</a></li>
+                            <li><a class="dropdown-item" href="/hawkerCentres">Hawker Centers</a></li>
+                            <li><a class="dropdown-item" href="/favorites">Favorites</a></li>
+                        </ul>
+                    </li>
+
+                    <% if (userRole === 'admin') { %>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin">Admin Panel</a>
+                        </li>
+                    <% } %>
+                </ul>
+
+                <!-- Right-aligned Profile Dropdown (Far right) -->
+                <ul class="navbar-nav ms-auto">  <!-- ms-auto moves it to the far right -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> Settings
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile">Profile Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+                        </ul>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
+
 
     <div class="container mt-5">
         <h1 class="text-center mb-4">Food Items for Stall ID: <%= stallId %></h1>

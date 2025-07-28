@@ -179,11 +179,9 @@ app.get('/hawker-centers', checkAuthenticated, (req, res) => {
     }
 
     // ✅ RENDER the EJS page and PASS the user + results
-        // Pass both centers and user data to the view
-        res.render('hawker_centers', {
-            centers: results,  // List of hawker centers
-            user: user,         // Pass user object to the view
-            userRole: user ? user.role : null  // Pass user role (if available
+    res.render('hawker_centers', {
+        centers: results,
+        user: req.session.user || null
     });
   });
 });
@@ -599,7 +597,7 @@ app.get('/addFood/:stallId', checkAuthenticated, checkAdmin, (req, res) => {
 // Route to handle adding a new food item for a specific stall
 app.post('/addFood/:stallId', checkAuthenticated, checkAdmin, upload.single('image'), (req, res) => {
     const { name, price, description, imageUrl } = req.body;
-    const stallId = req.params.stallId;  // Get the stall ID from the URL
+    const stallId = req.params.stallId;  // Get the stallId from URL parameter (important!)
     const image = req.file ? `/images/${req.file.filename}` : imageUrl;  // Handle image upload
 
     // Insert food item into the database
@@ -608,10 +606,11 @@ app.post('/addFood/:stallId', checkAuthenticated, checkAdmin, upload.single('ima
         if (err) {
             console.error('Error inserting food item:', err);
             req.flash('error', 'Failed to add food item');
-            return res.redirect(`/addFood/${stallId}`);
+            return res.redirect(`/addFood/${stallId}`);  // Redirect to the form if error occurs
         }
+
         req.flash('success', 'Food item added successfully');
-        res.redirect(`/foodItems/${stallId}`);  // Redirect to the food items page for that stall
+        res.redirect(`/foodItems/${stallId}`);  // Redirect to the food items list for the specific stall
     });
 });
 
@@ -663,7 +662,7 @@ app.post('/deleteFood/:id', checkAuthenticated, checkAdmin, (req, res) => {
         }
 
         req.flash('success', 'Food item deleted successfully!');
-        res.redirect('/foodItems/$[stallId]');  // Redirect back to the food items list
+        res.redirect(`/foodItems/${stallId}`);;  // Redirect back to the food items list
     });
 });
 
@@ -1011,5 +1010,3 @@ app.get('/deleteFavorite/:id', checkAuthenticated, checkAdmin, (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Hawker Hero running on port ${PORT}`));
 
-
-//testing 123

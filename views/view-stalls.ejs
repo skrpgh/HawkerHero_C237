@@ -30,6 +30,9 @@
     </style>
 </head>
 <body>
+ <head>
+        <title>HakerHero</title>
+    </head>
     <nav class="navbar navbar-expand-sm bg-dark navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">Hawker Hero</a>
@@ -37,21 +40,9 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-<<<<<<< HEAD
-        <div class="collapse navbar-collapse" id="collapsibleNavbar"> 
-        <!-- Left-aligned nav items -->
-        <ul class="navbar-nav me-auto">
-            <li class="nav-item">
-            <a class="nav-link" href="/">Home</a>
-            </li>
-=======
             <div class="collapse navbar-collapse" id="collapsibleNavbar">
                 <!-- Left-aligned nav items -->
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
->>>>>>> a0e1c6dae9d2c99b72665835ea73905eb634bd78
 
                     <!-- Modules Dropdown -->
                     <li class="nav-item dropdown">
@@ -62,21 +53,20 @@
                             <li><a class="dropdown-item" href="/foodItems">Food Items</a></li>
                             <li><a class="dropdown-item" href="/reviews">Reviews</a></li>
                             <li><a class="dropdown-item" href="/recommendations">Recommendations</a></li>
-                            <li><a class="dropdown-item" href="/hawker-centers">Hawker Centers</a></li>
-                            <li><a class="dropdown-item" href="/view-stalls">Hawker Stalls</a></li>
-                            <li><a class="dropdown-item" href="/favorite">Favorites</a></li>
+                            <li><a class="dropdown-item" href="/hawkerCentres">Hawker Centers</a></li>
+                            <li><a class="dropdown-item" href="/favorites">Favorites</a></li>
                         </ul>
                     </li>
 
                     <% if (userRole === 'admin') { %>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin">Admin Panel</a>
-                    </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">Dashboard</a>
+                        </li>
                     <% } %>
                 </ul>
 
                 <!-- Right-aligned Profile Dropdown -->
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto">  <!-- ms-auto moves it to the far right -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle"></i> Settings
@@ -91,6 +81,7 @@
             </div>
         </div>
     </nav>
+
 
     <div class="container">
         <h1 class="text-center mb-4">Hawker Stalls</h1>
@@ -114,8 +105,7 @@
                             <h5 class="card-title"><%= stall.name %></h5>
                             <p class="card-text"><strong>Cuisine:</strong> <%= stall.cuisine_type %></p>
                             <p class="card-text"><strong>Location:</strong> <%= stall.location %></p>
-
-                            <a href="/foodItems/<%=stall.id%>" class="btn btn-primary">View Stall</a>
+                            
                             <a href="/viewl/<%= stall.id %>" class="btn btn-primary">View Details</a>
                             <a href="/edit-stall/<%= stall.id %>" class="btn btn-warning btn-sm">Edit</a>
                             <a href="/foodItems/<%= stall.id %>" class="btn btn-info">View Food Items</a>
