@@ -125,9 +125,10 @@
 
                     <% if (user.role === 'admin') { %>
                         <td>
-                            <a href="/hawker-centers/edit/<%= center.id %>" class="btn btn-warning btn-sm">Edit</a>
+                            <a href="/hawker-centers/edit/<%= center.id %>" class="btn btn-warning btn-sm">Edit</a>                       
                             <form method="POST" action="/hawker-centers/delete/<%= center.id %>" style="display:inline;">
                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            <a href="/view-stalls/<%= center.id %>" class="btn btn-primary btn-sm">View Stalls</a>
                             </form>
                         </td>
                     <% } %>

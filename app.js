@@ -245,15 +245,39 @@ app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res
 });
 
 
-// Route to display all hawker stalls for users
-app.get('/view-stalls', (req, res) => {
-    const sqlQuery = 'SELECT * FROM stalls';
-    connection.query(sqlQuery, (err, result) => {
+
+// Route to display all stalls for a specific hawker center
+app.get('/view-stalls/:centerId', (req, res) => {
+    const centerId = req.params.centerId; // Get the center ID from the URL
+    const sqlQuery = 'SELECT * FROM stalls WHERE center_id = ?'; // Query stalls by center_id
+    
+    connection.query(sqlQuery, [centerId], (err, result) => {
         if (err) {
             console.log(err);
             req.flash('error', 'Error fetching stalls');
             return res.redirect('/');
         }
+
+        // Render the page with the filtered stalls
+        res.render('view-stalls', { stalls: result });
+    });
+});
+
+
+
+// Route to display all stalls for a specific hawker center
+app.get('/view-stalls/:centerId', (req, res) => {
+    const centerId = req.params.centerId; // Get the center ID from the URL
+    const sqlQuery = 'SELECT * FROM stalls WHERE center_id = ?'; // Query stalls by center_id
+    
+    connection.query(sqlQuery, [centerId], (err, result) => {
+        if (err) {
+            console.log(err);
+            req.flash('error', 'Error fetching stalls');
+            return res.redirect('/');
+        }
+
+        // Render the page with the filtered stalls
         res.render('view-stalls', { stalls: result });
     });
 });
