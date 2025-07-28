@@ -170,6 +170,8 @@ app.get('/hawker-centers', checkAuthenticated, (req, res) => {
     });
 });
 
+app.get('/hawker-center/:id')
+
 // Search hawker centers
 app.post('/hawker-centers/search', checkAuthenticated, (req, res) => {
     const search = '%' + req.body.search + '%';
