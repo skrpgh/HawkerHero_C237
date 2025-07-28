@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Recommendation</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+</head>
+<body class="bg-light">
+  <div class="container mt-5">
+    <h1 class="text-center mb-4">Add Recommendation</h1>
+
+    <% if (errors && errors.length > 0) { %>
+      <div class="alert alert-danger">
+        <ul class="mb-0">
+          <% errors.forEach(error => { %>
+            <li><%= error %></li>
+          <% }) %>
+        </ul>
+      </div>
+    <% } %>
+
+    <form action="/recommendations/add" method="POST">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          class="form-control"
+          placeholder="Enter title"
+          value="<%= typeof title !== 'undefined' ? title : '' %>"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea
+          id="description"
+          name="description"
+          rows="4"
+          class="form-control"
+          placeholder="Enter description"
+          required
+        ><%= typeof description !== 'undefined' ? description : '' %></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="image_url">Image URL</label>
+        <input
+          type="text"
+          id="image_url"
+          name="image_url"
+          class="form-control"
+          placeholder="Enter image URL"
+          required
+          value="<%= typeof image_url !== 'undefined' ? image_url : '' %>"
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary">Add Recommendation</button>
+      <a href="/recommendations" class="btn btn-secondary ml-2">Cancel</a>
+    </form>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

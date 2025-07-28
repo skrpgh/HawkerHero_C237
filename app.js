@@ -624,58 +624,102 @@ app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res
 
 // View all recommendations
 app.get('/recommendations', checkAuthenticated, (req, res) => {
-    const sql = 'SELECT * FROM recommendations';
-    connection.query(sql, (err, results) => {
+    const search = req.query.search || '';
+
+    let sql = 'SELECT * FROM recommendations';
+    let params = [];
+
+    if (search) {
+        sql += ' WHERE title LIKE ? OR description LIKE ?';
+        params = [`%${search}%`, `%${search}%`];
+    }
+
+    connection.query(sql, params, (err, results) => {
         if (err) {
-            req.flash('error', 'Error loading recommendations');
-            return res.render('recommendations', { user: req.session.user, messages: req.flash('error'), recommendations: [] });
+            console.error('Database query error:', err);
+
+        // Get errors from flash, or fallback to a single error string in array
+            const errors = req.flash('error');
+            if (errors.length === 0) errors.push('Error loading recommendations');
+
+            return res.render('recommendations', {
+                user: req.session.user,
+                messages: [],        // no success messages
+                errors: errors,      // errors from flash or fallback
+                recommendations: [],
+                search
+            });
         }
+
+    // Get any flash messages and errors BEFORE rendering
+        const messages = req.flash('success');
+        const errors = req.flash('error');
+
         res.render('recommendations', {
             user: req.session.user,
-            messages: req.flash('success'),
-            errors: req.flash('error'),
-            recommendations: results
+            messages: messages.length > 0 ? messages : [],
+            errors: errors.length > 0 ? errors : [],
+            recommendations: results,
+            search
         });
     });
 });
 
-// Add new recommendation (Admin only)
+app.get('/recommendations/add', (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.status(403).send('Forbidden');
+    }
+
+    res.render('add_recommendations', {
+        user: req.session.user,
+        errors: [],
+        messages: []
+    });
+});
+
+// Add recommendation (Admin only)
 app.post('/recommendations/add', checkAuthenticated, (req, res) => {
     if (req.session.user.role !== 'admin') {
         req.flash('error', 'You are not authorized to add recommendations.');
         return res.redirect('/recommendations');
     }
 
-    const { title, description, image_url } = req.body;
+    const { title, description, image_url, food_id } = req.body;
+    const userId = req.session.user.id; 
+    const stallId = req.session.user.stall_id || null;  // handle if undefined
+
     if (!title || !description) {
         req.flash('error', 'All fields are required.');
-        return res.redirect('/recommendations');
+        return res.redirect('/recommendations/add');
     }
 
-    const sql = 'INSERT INTO recommendations (title, description, image_url) VALUES (?, ?, ?)';
-    connection.query(sql, [title, description, image_url], (err, result) => {
+    const sql = 'INSERT INTO recommendations (title, description, image_url, user_id, stall_id, food_id) VALUES (?, ?, ?, ?, ?, ?)';
+    connection.query(sql, [title, description, image_url, userId, stallId, food_id], (err, result) => {
         if (err) {
+            console.error('Error inserting recommendation:', err);
             req.flash('error', 'Failed to add recommendation');
-            return res.redirect('/recommendations');
+            return res.redirect('/recommendations/add');
         }
         req.flash('success', 'Recommendation added!');
         res.redirect('/recommendations');
     });
 });
 
+
 // Edit recommendation (Authenticated users)
 app.get('/recommendations/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
     const id = req.params.id;
     const sql = 'SELECT * FROM recommendations WHERE id = ?';
-    db.query(sql, [id], (err, results) => {
+    connection.query(sql, [id], (err, results) => {
         if (err || results.length === 0) {
             req.flash('error', 'Recommendation not found');
             return res.redirect('/recommendations');
         }
-        res.render('edit_recommendation', {
+        res.render('edit_recommendations', {
             user: req.session.user,
             recommendation: results[0],
-            errors: req.flash('error')
+            errors: req.flash('error'),
+            messages: req.flash('success')
         });
     });
 });
@@ -706,7 +750,7 @@ app.post('/recommendations/delete/:id', checkAuthenticated, checkAdmin, (req, re
 
     const sql = 'DELETE FROM recommendations WHERE id = ?';
     connection.query(sql, [id], (err, result) => {
-        if (err) {
+    if (err) {
             req.flash('error', 'Failed to delete recommendation');
             return res.redirect('/recommendations');
         }
