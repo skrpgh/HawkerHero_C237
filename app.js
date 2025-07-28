@@ -286,6 +286,7 @@ app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res
     });
 });
 
+<<<<<<< HEAD
 // Route to display all stalls for a specific hawker center
 app.get('/view-stalls/:centerId', (req, res) => {
     const centerId = req.params.centerId; // Get the center ID from the URL
@@ -304,6 +305,23 @@ app.get('/view-stalls/:centerId', (req, res) => {
 });
 
 
+=======
+app.get('/view-stalls', checkAuthenticated, (req, res) => {
+  const sql = 'SELECT * FROM stalls';
+  connection.query(sql, (err, results) => {
+    if (err) {
+      console.error('Error retrieving stalls:', err);
+      return res.status(500).send('Failed to retrieve stalls');
+    }
+
+    // ✅ RENDER the EJS page and PASS the user + results
+    res.render('view-stalls', {
+      stalls: results,
+      user: req.session.user || null
+    });
+  });
+});
+>>>>>>> bdc7b417158a40fa969c4726464880efae583f73
 
 // Route to display all stalls for a specific hawker center
 app.get('/view-stalls/:centerId', (req, res) => {
@@ -328,10 +346,11 @@ app.get('/stalls/add', checkAuthenticated, (req, res) => {
         res.render('addStall');
     } else {
         req.flash('error', 'Only admin can add stalls');
-        res.redirect('/hawker-centers');
+        res.redirect('/view-stalls/:id');
     }
 });
 
+<<<<<<< HEAD
 app.post('/stalls/add', (req, res) => {
     if (req.session.user && req.session.user.role === 'admin') {
         const { name, location, description } = req.body;
@@ -349,6 +368,23 @@ app.post('/stalls/add', (req, res) => {
         req.flash('error', 'Unauthorized access');
         res.redirect('/login');
     }
+=======
+app.post('/stalls/add', checkAuthenticated, checkAdmin, (req, res) => {
+    const { name, location, cuisine_type, center_id, image_url } = req.body;
+
+    const sql = 'INSERT INTO stalls (name, location, cuisine_type, center_id, image_url) VALUES (?, ?, ?, ?, ?)';
+    
+    connection.query(sql, [name, location, cuisine_type, center_id, image_url], (err, result) => {
+        if (err) {
+            console.error('Error adding stall:', err);
+            req.flash('error', 'Failed to add stall');
+            return res.redirect('/stalls/add');
+        }
+
+        req.flash('success', 'Stall added successfully');
+        res.redirect('/view-stalls');
+    });
+>>>>>>> bdc7b417158a40fa969c4726464880efae583f73
 });
 
 
@@ -405,9 +441,27 @@ app.post('/delete-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
             return res.redirect('/admin');
         }
 
+<<<<<<< HEAD
         req.flash('success', 'Stall deleted successfully!');
         res.redirect('/admin');
     });
+=======
+
+app.post('/hawker-stalls/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
+  const { id } = req.params;
+  const sql = 'DELETE FROM stalls WHERE id = ?';
+
+  connection.query(sql, [id], (err, result) => {
+    if (err) {
+      console.error('Delete Error:', err.message);
+      req.flash('error', 'Failed to delete stall.');
+      return res.redirect('/hawker-centers');
+    }
+
+    req.flash('success', 'Stall deleted successfully!');
+    res.redirect('/view-stalls/:id');
+  });
+>>>>>>> bdc7b417158a40fa969c4726464880efae583f73
 });
 
 
@@ -523,6 +577,7 @@ app.get('/deletereview/:id', (req, res) => {
     });
 });
 
+<<<<<<< HEAD
 // Route to display food items for a specific stall
 app.get('/foodItems/:stallId', (req, res) => {
     const stallId = req.params.stallId;  // Get the stall ID from the URL
@@ -530,6 +585,37 @@ app.get('/foodItems/:stallId', (req, res) => {
     // Query to fetch food items for the specific stall
     const sqlQuery = 'SELECT * FROM food_items WHERE stall_id = ?';
     connection.query(sqlQuery, [stallId], (err, results) => {
+=======
+app.get('/foodItems', checkAuthenticated, (req, res) => {
+    const { name, minPrice, maxPrice, stallId } = req.query;
+    let sql = 'SELECT * FROM food_items WHERE 1=1';
+    const params = [];
+
+    // Filter by food name if provided
+    if (name) {
+        sql += ' AND name LIKE ?';
+        params.push(`%${name}%`);
+    }
+
+    // Filter by price range if provided
+    if (minPrice) {
+        sql += ' AND price >= ?';
+        params.push(minPrice);
+    }
+
+    if (maxPrice) {
+        sql += ' AND price <= ?';
+        params.push(maxPrice);
+    }
+
+    // Filter by stallId if provided
+    if (stallId) {
+        sql += ' AND stall_id = ?'; // Assuming `stall_id` is the foreign key in `food_items` table
+        params.push(stallId);
+    }
+
+    connection.query(sql, params, (err, results) => {
+>>>>>>> bdc7b417158a40fa969c4726464880efae583f73
         if (err) {
             console.error('Error fetching food items for stall:', err);
             return res.status(500).send('Internal Server Error');
@@ -542,9 +628,15 @@ app.get('/foodItems/:stallId', (req, res) => {
 
         // Render the foodItems page with the results and stallId
         res.render('foodItems', {
+<<<<<<< HEAD
             foodItems: results,   // List of food items for the stall
             stallId: stallId,     // Pass the stallId to the view
             userRole: req.session.user?.role || null,  // User role for role-based content
+=======
+            foodItems: results,
+            userRole: req.session.user?.role || null,
+            query: req.query // Pass current filter values back to EJS
+>>>>>>> bdc7b417158a40fa969c4726464880efae583f73
         });
     });
 });
@@ -803,21 +895,61 @@ app.get('/search', (req, res) => {
 });
 
 // Favorite route
-app.get('/favorite/:id', checkAuthenticated, (req, res) => {
-    const id = req.params.id;
-    const sql = 'SELECT * FROM favorites WHERE id = ?';
 
-    connection.query(sql, [id], (error, results) => {
-        if (error) {
-            console.error('Database query error:', error.message);
-            return res.status(500).send('Error retrieving favorite');
+// Add or remove hawker center from favorites
+app.post('/hawker/favorite/:id', checkAuthenticated, (req, res) => {
+    const hawkerId = req.params.id;
+    const userId = req.session.user.id; // Assuming user is logged in
+
+    // Check if the hawker center is already favorited by the user
+    const checkFavoriteQuery = 'SELECT * FROM favorites WHERE user_id = ? AND hawker_id = ?';
+    connection.query(checkFavoriteQuery, [userId, hawkerId], (err, results) => {
+        if (err) {
+            console.error('Error checking favorite:', err);
+            return res.status(500).send('Error checking favorite');
         }
 
         if (results.length > 0) {
-            res.render('favorite', {
-                favorite: results[0],
-                user: req.session.user
+            // If already favorited, remove from favorites
+            const deleteFavoriteQuery = 'DELETE FROM favorites WHERE user_id = ? AND hawker_id = ?';
+            connection.query(deleteFavoriteQuery, [userId, hawkerId], (err) => {
+                if (err) {
+                    console.error('Error removing favorite:', err);
+                    return res.status(500).send('Error removing favorite');
+                }
+                req.flash('success', 'Removed from favorites');
+                res.redirect('/hawker-centers');
             });
+        } else {
+            // If not favorited, add to favorites
+            const addFavoriteQuery = 'INSERT INTO favorites (user_id, hawker_id) VALUES (?, ?)';
+            connection.query(addFavoriteQuery, [userId, hawkerId], (err) => {
+                if (err) {
+                    console.error('Error adding favorite:', err);
+                    return res.status(500).send('Error adding favorite');
+                }
+                req.flash('success', 'Added to favorites');
+                res.redirect('/hawker-centers');
+            });
+        }
+    });
+});
+
+app.get('/favorite/:id', checkAuthenticated, (req, res) => {
+    const favoriteId = req.params.id;  // Get the ID from the URL
+    const userId = req.session.user.id; // Get the logged-in user's ID from the session
+
+    // Query to retrieve the favorite from the database
+    const sql = 'SELECT * FROM favorites WHERE id = ? AND user_id = ?';
+    connection.query(sql, [favoriteId, userId], (err, results) => {
+        if (err) {
+            console.error('Error fetching favorite:', err);
+            return res.status(500).send('Error fetching favorite');
+        }
+
+        if (results.length > 0) {
+            // Send the favorite data to the view
+            res.render('favorite', { favorite: results[0], userRole: req.session.user.role });
         } else {
             res.status(404).send('Favorite not found');
         }
