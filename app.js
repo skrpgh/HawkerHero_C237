@@ -162,119 +162,218 @@ app.post('/register', validateRegistration, (req, res) => {
     });
 });
 
-app.get('/foodItems', checkAuthenticated, (req, res) => {
-    const { name, minPrice, maxPrice } = req.query;
-    let sql = 'SELECT * FROM food_items WHERE 1=1';
-    const params = [];
-
-    if (name) {
-        sql += ' AND name LIKE ?';
-        params.push(`%${name}%`);
-    }
-
-    if (minPrice) {
-        sql += ' AND price >= ?';
-        params.push(minPrice);
-    }
-
-    if (maxPrice) {
-        sql += ' AND price <= ?';
-        params.push(maxPrice);
-    }
-
-    connection.query(sql, params, (err, results) => {
-        if (err) {
-            console.error('Error fetching filtered food items:', err);
-            return res.status(500).send('Internal Server Error');
-        }
-
-        res.render('foodItems', {
-            foodItems: results,
-            userRole: req.session.user?.role || null,
-            query: req.query // pass current filter values back to EJS
-        });
+app.get('/hawker-centers', checkAuthenticated, (req, res) => {
+    const sql = 'SELECT * FROM hawker_centers';
+    connection.query(sql, (err, results) => {
+        if (err) throw err;
+        res.render('hawker_centers', { centers: results, user: req.session.user });
     });
 });
 
+app.get('/hawker-center/:id')
 
-app.get('/food/:id', checkAuthenticated, (req, res) => {
-    const id = req.params.id;
-    connection.query('SELECT * FROM food_items WHERE id = ?', [id], (err, results) => {
-        if (err || results.length === 0) return res.status(404).send('Food item not found');
-        res.render('foodItems', { food: results[0], userRole: req.session.user.role });
+// Search hawker centers
+app.post('/hawker-centers/search', checkAuthenticated, (req, res) => {
+    const search = '%' + req.body.search + '%';
+    const sql = 'SELECT * FROM hawker_centers WHERE name LIKE ? OR address LIKE ?';
+    connection.query(sql, [search, search], (err, results) => {
+        if (err) throw err;
+        res.render('hawker_centers', { centers: results, user: req.session.user });
     });
 });
 
-// Food item routes (Admin-only)
-app.get('/addFood', checkAuthenticated, checkAdmin, (req, res) => {
-    res.render('addFood');
+// Add new center (admin only)
+app.get('/hawker-centers/new', checkAuthenticated, checkAdmin, (req, res) => {
+    res.render('new_center', { user: req.session.user, messages: req.flash('error') });
 });
 
-app.post('/addFood', upload.single('image'), (req, res) => {
-    const { name, price, description, stall_id, imageUrl } = req.body; // Added missing fields
+app.post('/hawker-centers/new', checkAuthenticated, checkAdmin, upload.single('image'), (req, res) => {
+    const { name, address, facilities, imageUrl } = req.body;
     let image;
 
     if (imageUrl && imageUrl.trim() !== "") {
-        image = imageUrl.trim(); // Use external link
+        image = imageUrl.trim(); // External link
     } else if (req.file) {
-        image = `/images/${req.file.filename}`; // Use uploaded file path
+        image = `/uploads/${req.file.filename}`; // Uploaded file (adjust path if needed)
     } else {
         image = null;
     }
 
-    // Fixed SQL to match your form fields
-    const sql = 'INSERT INTO food_items (name, price, description, stall_id, image_url) VALUES ( ?, ?, ?, ?, ?)';
-    connection.query(sql, [name, price, description, stall_id, image], (err) => {
+    if (!name || !address) {
+        req.flash('error', 'Name and address are required.');
+        return res.redirect('/hawker-centers/new');
+    }
+
+    const sql = 'INSERT INTO hawker_centers (name, address, facilities, image_url) VALUES (?, ?, ?, ?)';
+    connection.query(sql, [name, address, facilities, image], (err) => {
         if (err) {
-            console.error('Error inserting food item:', err);
-            req.flash('error', 'Failed to add food item');
-            return res.redirect('/foodItems'); 
+            console.error('Error inserting hawker center:', err);
+            req.flash('error', 'Failed to add hawker center.');
+            return res.redirect('/hawker-centers/new');
         } else {
-            req.flash('success', 'Food item added successfully');
-            res.redirect('/foodItems'); 
+            req.flash('success', 'Hawker center added successfully.');
+            res.redirect('/hawker-centers');
         }
     });
 });
 
-app.get('/editFood/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const id = req.params.id;
-    connection.query('SELECT * FROM food_items WHERE id = ?', [id], (err, results) => {
-        if (err || results.length === 0) return res.status(404).send('Not Found');
+// Edit center (admin only)
+app.get('/hawker-centers/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const sql = 'SELECT * FROM hawker_centers WHERE id = ?';
+    connection.query(sql, [req.params.id], (err, results) => {
+        if (err) throw err;
+        res.render('edit_center', { center: results[0], user: req.session.user, messages: req.flash('error') });
+    });
+});
 
-        res.render('editFood', {
-            food: results[0],
-            messages: req.flash('error') 
+app.post('/hawker-centers/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const { name, address, facilities, image_url } = req.body;
+    const sql = 'UPDATE hawker_centers SET name = ?, address = ?, facilities = ?, image_url = ? WHERE id = ?';
+    connection.query(sql, [name, address, facilities, image_url, req.params.id], (err) => {
+        if (err) throw err;
+        res.redirect('/hawker-centers');
+    });
+});
+
+// Delete center (admin only)
+app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const sql = 'DELETE FROM hawker_centers WHERE id = ?';
+    connection.query(sql, [req.params.id], (err) => {
+        if (err) throw err;
+        res.redirect('/hawker-centers');
+    });
+});
+
+
+
+// Route to display all stalls for a specific hawker center
+app.get('/view-stalls/:centerId', (req, res) => {
+    const centerId = req.params.centerId; // Get the center ID from the URL
+    const sqlQuery = 'SELECT * FROM stalls WHERE center_id = ?'; // Query stalls by center_id
+    
+    connection.query(sqlQuery, [centerId], (err, result) => {
+        if (err) {
+            console.log(err);
+            req.flash('error', 'Error fetching stalls');
+            return res.redirect('/');
+        }
+
+        // Render the page with the filtered stalls
+        res.render('view-stalls', { stalls: result });
+    });
+});
+
+
+
+// Route to display all stalls for a specific hawker center
+app.get('/view-stalls/:centerId', (req, res) => {
+    const centerId = req.params.centerId; // Get the center ID from the URL
+    const sqlQuery = 'SELECT * FROM stalls WHERE center_id = ?'; // Query stalls by center_id
+    
+    connection.query(sqlQuery, [centerId], (err, result) => {
+        if (err) {
+            console.log(err);
+            req.flash('error', 'Error fetching stalls');
+            return res.redirect('/');
+        }
+
+        // Render the page with the filtered stalls
+        res.render('view-stalls', { stalls: result });
+    });
+});
+
+// Add Stall Route (GET)
+app.get('/add-stall', checkAuthenticated, checkAdmin, (req, res) => {
+    res.render('add', { 
+        messages: req.flash('success'),  // Display success message if any
+        errors: req.flash('error')      // Display error message if any
+    });
+});
+
+// Add Stall Route (POST)
+app.post('/add-stall', checkAuthenticated, checkAdmin, (req, res) => {
+    const { name, location, cuisine_type, imageUrl, center_id } = req.body;
+
+    // Validate required fields
+    if (!name || !location || !cuisine_type || !center_id) {
+        req.flash('error', 'All fields are required.');
+        return res.redirect('/add-stall');
+    }
+
+    const image_url = imageUrl || null;
+
+    const sql = 'INSERT INTO stalls (name, location, cuisine_type, center_id, image_url) VALUES (?, ?, ?, ?, ?)';
+    connection.query(sql, [name, location, cuisine_type, center_id, image_url], (err, result) => {
+        if (err) {
+            console.error('Error inserting stall:', err.message);
+            req.flash('error', 'Failed to add stall.');
+            return res.redirect('/add-stall');
+        }
+
+        req.flash('success', 'Stall added successfully!');
+        res.redirect('/dashboard');
+    });
+});
+
+
+
+// Edit Stall Details (GET)
+app.get('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const { id } = req.params;
+    const sqlGetStall = 'SELECT * FROM stalls WHERE id = ?';
+
+    connection.query(sqlGetStall, [id], (err, result) => {
+        if (err || result.length === 0) {
+            req.flash('error', 'Stall not found.');
+            return res.redirect('/admin');
+        }
+
+        res.render('edit', {
+            stall: result[0],
+            flash: req.flash()
         });
     });
 });
 
-app.post('/editFood/:id', checkAuthenticated, checkAdmin, upload.single('image'), (req, res) => {
-    const id = req.params.id;
-    const { name, price, description, stall_id, currentImage } = req.body;
-    const image = req.file ? req.file.filename : currentImage;
 
-    const sql = 'UPDATE food_items SET name = ?, price = ?, description = ?, stall_id = ?, image_url = ? WHERE id = ?';
-    connection.query(sql, [name, price, description, stall_id, image, id], (err) => {
+// Edit Stall Details (POST)
+app.post('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const { id } = req.params;
+    const { name, location, cuisine_type, image_url } = req.body;
+
+    const sqlUpdateStall = `
+        UPDATE stalls
+        SET name = ?, location = ?, cuisine_type = ?, image_url = ?
+        WHERE id = ?
+    `;
+
+    connection.query(sqlUpdateStall, [name, location, cuisine_type, image_url, id], (err) => {
         if (err) {
-            req.flash('error', 'Failed to update food item.');
-            return res.redirect(`/editFood/${id}`);
+            console.error("Update Error:", err.message);
+            req.flash('error', 'Failed to update stall.');
+            return res.redirect(`/edit-stall/${id}`);
         }
 
-        req.flash('success', 'Food item updated successfully!');
-        res.redirect('/foodItems');
+        req.flash('success', 'Stall updated successfully!');
+        res.redirect('/admin');
     });
 });
 
-app.get('/deleteFood/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const id = req.params.id;
-    connection.query('DELETE FROM food_items WHERE id = ?', [id], (err) => {
-        if (err) return res.status(500).send('Delete error');
-        res.redirect('/foodItems');
+// Deleting a Stall
+app.post('/delete-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const { id } = req.params;
+    const sqlDeleteStall = 'DELETE FROM stalls WHERE id = ?';
+    connection.query(sqlDeleteStall, [id], (err, result) => {
+        if (err) {
+            req.flash('error', 'Failed to delete stall.');
+            return res.redirect('/admin');
+        }
+
+        req.flash('success', 'Stall deleted successfully!');
+        res.redirect('/admin');
     });
 });
 
-
-//reviews
 
 app.get('/reviews', checkAuthenticated,(req, res) => {
     const { q } = req.query;
@@ -388,9 +487,253 @@ app.get('/deletereview/:id', (req, res) => {
     });
 });
 
+app.get('/foodItems', checkAuthenticated, (req, res) => {
+    const { name, minPrice, maxPrice } = req.query;
+    let sql = 'SELECT * FROM food_items WHERE 1=1';
+    const params = [];
 
-//favorite
+    if (name) {
+        sql += ' AND name LIKE ?';
+        params.push(`%${name}%`);
+    }
 
+    if (minPrice) {
+        sql += ' AND price >= ?';
+        params.push(minPrice);
+    }
+
+    if (maxPrice) {
+        sql += ' AND price <= ?';
+        params.push(maxPrice);
+    }
+
+    connection.query(sql, params, (err, results) => {
+        if (err) {
+            console.error('Error fetching filtered food items:', err);
+            return res.status(500).send('Internal Server Error');
+        }
+
+        res.render('foodItems', {
+            foodItems: results,
+            userRole: req.session.user?.role || null,
+            query: req.query // pass current filter values back to EJS
+        });
+    });
+});
+
+
+app.get('/food/:id', checkAuthenticated, (req, res) => {
+    const id = req.params.id;
+    connection.query('SELECT * FROM food_items WHERE id = ?', [id], (err, results) => {
+        if (err || results.length === 0) return res.status(404).send('Food item not found');
+        res.render('foodItems', { food: results[0], userRole: req.session.user.role });
+    });
+});
+
+// Food item routes (Admin-only)
+app.get('/addFood', checkAuthenticated, checkAdmin, (req, res) => {
+    res.render('addFood');
+});
+
+app.post('/addFood', upload.single('image'), (req, res) => {
+    const { name, price, description, stall_id, imageUrl } = req.body; // Added missing fields
+    let image;
+
+    if (imageUrl && imageUrl.trim() !== "") {
+        image = imageUrl.trim(); // Use external link
+    } else if (req.file) {
+        image = `/images/${req.file.filename}`; // Use uploaded file path
+    } else {
+        image = null;
+    }
+
+    // Fixed SQL to match your form fields
+    const sql = 'INSERT INTO food_items (name, price, description, stall_id, image_url) VALUES ( ?, ?, ?, ?, ?)';
+    connection.query(sql, [name, price, description, stall_id, image], (err) => {
+        if (err) {
+            console.error('Error inserting food item:', err);
+            req.flash('error', 'Failed to add food item');
+            return res.redirect('/foodItems'); 
+        } else {
+            req.flash('success', 'Food item added successfully');
+            res.redirect('/foodItems'); 
+        }
+    });
+});
+
+app.get('/editFood/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const id = req.params.id;
+    connection.query('SELECT * FROM food_items WHERE id = ?', [id], (err, results) => {
+        if (err || results.length === 0) return res.status(404).send('Not Found');
+
+        res.render('editFood', {
+            food: results[0],
+            messages: req.flash('error') 
+        });
+    });
+});
+
+app.post('/editFood/:id', checkAuthenticated, checkAdmin, upload.single('image'), (req, res) => {
+    const id = req.params.id;
+    const { name, price, description, stall_id, currentImage } = req.body;
+    const image = req.file ? req.file.filename : currentImage;
+
+    const sql = 'UPDATE food_items SET name = ?, price = ?, description = ?, stall_id = ?, image_url = ? WHERE id = ?';
+    connection.query(sql, [name, price, description, stall_id, image, id], (err) => {
+        if (err) {
+            req.flash('error', 'Failed to update food item.');
+            return res.redirect(`/editFood/${id}`);
+        }
+
+        req.flash('success', 'Food item updated successfully!');
+        res.redirect('/foodItems');
+    });
+});
+
+app.get('/deleteFood/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const id = req.params.id;
+    connection.query('DELETE FROM food_items WHERE id = ?', [id], (err) => {
+        if (err) return res.status(500).send('Delete error');
+        res.redirect('/foodItems');
+    });
+});
+
+
+app.get('/recommendations', checkAuthenticated, (req, res) => {
+    const search = req.query.search || '';
+
+    let sql = 'SELECT * FROM recommendations';
+    let params = [];
+
+    if (search) {
+        sql += ' WHERE title LIKE ? OR description LIKE ?';
+        params = [`%${search}%`, `%${search}%`];
+    }
+
+    connection.query(sql, params, (err, results) => {
+        if (err) {
+            console.error('Database query error:', err);
+
+        // Get errors from flash, or fallback to a single error string in array
+            const errors = req.flash('error');
+            if (errors.length === 0) errors.push('Error loading recommendations');
+
+            return res.render('recommendations', {
+                user: req.session.user,
+                messages: [],        // no success messages
+                errors: errors,      // errors from flash or fallback
+                recommendations: [],
+                search
+            });
+        }
+
+    // Get any flash messages and errors BEFORE rendering
+        const messages = req.flash('success');
+        const errors = req.flash('error');
+
+        res.render('recommendations', {
+            user: req.session.user,
+            messages: messages.length > 0 ? messages : [],
+            errors: errors.length > 0 ? errors : [],
+            recommendations: results,
+            search
+        });
+    });
+});
+
+app.get('/recommendations/add', (req, res) => {
+    if (!req.session.user || req.session.user.role !== 'admin') {
+        return res.status(403).send('Forbidden');
+    }
+
+    res.render('add_recommendations', {
+        user: req.session.user,
+        errors: [],
+        messages: []
+    });
+});
+
+// Add recommendation (Admin only)
+app.post('/recommendations/add', checkAuthenticated, (req, res) => {
+    if (req.session.user.role !== 'admin') {
+        req.flash('error', 'You are not authorized to add recommendations.');
+        return res.redirect('/recommendations');
+    }
+
+    const { title, description, image_url, food_id } = req.body;
+    const userId = req.session.user.id; 
+    const stallId = req.session.user.stall_id || null;  // handle if undefined
+
+    if (!title || !description) {
+        req.flash('error', 'All fields are required.');
+        return res.redirect('/recommendations/add');
+    }
+
+    const sql = 'INSERT INTO recommendations (title, description, image_url, user_id, stall_id, food_id) VALUES (?, ?, ?, ?, ?, ?)';
+    connection.query(sql, [title, description, image_url, userId, stallId, food_id], (err, result) => {
+        if (err) {
+            console.error('Error inserting recommendation:', err);
+            req.flash('error', 'Failed to add recommendation');
+            return res.redirect('/recommendations/add');
+        }
+        req.flash('success', 'Recommendation added!');
+        res.redirect('/recommendations');
+    });
+});
+
+
+// Edit recommendation (Authenticated users)
+app.get('/recommendations/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const id = req.params.id;
+    const sql = 'SELECT * FROM recommendations WHERE id = ?';
+    connection.query(sql, [id], (err, results) => {
+        if (err || results.length === 0) {
+            req.flash('error', 'Recommendation not found');
+            return res.redirect('/recommendations');
+        }
+        res.render('edit_recommendations', {
+            user: req.session.user,
+            recommendation: results[0],
+            errors: req.flash('error'),
+            messages: req.flash('success')
+        });
+    });
+});
+
+app.post('/recommendations/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const id = req.params.id;
+    const { title, description, image_url } = req.body;
+
+    if (!title || !description) {
+        req.flash('error', 'All fields are required.');
+        return res.redirect(`/recommendations/edit/${id}`);
+    }
+
+    const sql = 'UPDATE recommendations SET title = ?, description = ?, image_url = ? WHERE id = ?';
+    connection.query(sql, [title, description, image_url, id], (err, result) => {
+        if (err) {
+            req.flash('error', 'Failed to update recommendation');
+            return res.redirect(`/recommendations/edit/${id}`);
+        }
+        req.flash('success', 'Recommendation updated!');
+        res.redirect('/recommendations');
+    });
+});
+
+// Delete recommendation (Admin only)
+app.post('/recommendations/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
+    const id = req.params.id;
+
+    const sql = 'DELETE FROM recommendations WHERE id = ?';
+    connection.query(sql, [id], (err, result) => {
+    if (err) {
+            req.flash('error', 'Failed to delete recommendation');
+            return res.redirect('/recommendations');
+        }
+        req.flash('success', 'Recommendation deleted!');
+        res.redirect('/recommendations');
+    });
+});
 
 app.get('/favorite', checkAuthenticated, (req, res) => {
     const sql = 'SELECT * FROM favorites';
@@ -536,332 +879,6 @@ app.get('/deleteFavorite/:id', checkAuthenticated, checkAdmin, (req, res) => {
             // Send a success response
             res.redirect('/');
         }
-    });
-});
-
-
-//Hawker centers
-
-app.get('/hawker-centers', checkAuthenticated, (req, res) => {
-    const sql = 'SELECT * FROM hawker_centers';
-    connection.query(sql, (err, results) => {
-        if (err) throw err;
-        res.render('hawker_centers', { centers: results, user: req.session.user });
-    });
-});
-
-// Search hawker centers
-app.post('/hawker-centers/search', checkAuthenticated, (req, res) => {
-    const search = '%' + req.body.search + '%';
-    const sql = 'SELECT * FROM hawker_centers WHERE name LIKE ? OR address LIKE ?';
-    connection.query(sql, [search, search], (err, results) => {
-        if (err) throw err;
-        res.render('hawker_centers', { centers: results, user: req.session.user });
-    });
-});
-
-// Add new center (admin only)
-app.get('/hawker-centers/new', checkAuthenticated, checkAdmin, (req, res) => {
-    res.render('new_center', { user: req.session.user, messages: req.flash('error') });
-});
-
-app.post('/hawker-centers/new', checkAuthenticated, checkAdmin, upload.single('image'), (req, res) => {
-    const { name, address, facilities, imageUrl } = req.body;
-    let image;
-
-    if (imageUrl && imageUrl.trim() !== "") {
-        image = imageUrl.trim(); // External link
-    } else if (req.file) {
-        image = `/uploads/${req.file.filename}`; // Uploaded file (adjust path if needed)
-    } else {
-        image = null;
-    }
-
-    if (!name || !address) {
-        req.flash('error', 'Name and address are required.');
-        return res.redirect('/hawker-centers/new');
-    }
-
-    const sql = 'INSERT INTO hawker_centers (name, address, facilities, image_url) VALUES (?, ?, ?, ?)';
-    connection.query(sql, [name, address, facilities, image], (err) => {
-        if (err) {
-            console.error('Error inserting hawker center:', err);
-            req.flash('error', 'Failed to add hawker center.');
-            return res.redirect('/hawker-centers/new');
-        } else {
-            req.flash('success', 'Hawker center added successfully.');
-            res.redirect('/hawker-centers');
-        }
-    });
-});
-
-// Edit center (admin only)
-app.get('/hawker-centers/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const sql = 'SELECT * FROM hawker_centers WHERE id = ?';
-    connection.query(sql, [req.params.id], (err, results) => {
-        if (err) throw err;
-        res.render('edit_center', { center: results[0], user: req.session.user, messages: req.flash('error') });
-    });
-});
-
-app.post('/hawker-centers/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const { name, address, facilities, image_url } = req.body;
-    const sql = 'UPDATE hawker_centers SET name = ?, address = ?, facilities = ?, image_url = ? WHERE id = ?';
-    connection.query(sql, [name, address, facilities, image_url, req.params.id], (err) => {
-        if (err) throw err;
-        res.redirect('/hawker-centers');
-    });
-});
-
-// Delete center (admin only)
-app.post('/hawker-centers/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const sql = 'DELETE FROM hawker_centers WHERE id = ?';
-    connection.query(sql, [req.params.id], (err) => {
-        if (err) throw err;
-        res.redirect('/hawker-centers');
-    });
-});
-
-// View all recommendations
-app.get('/recommendations', checkAuthenticated, (req, res) => {
-    const search = req.query.search || '';
-
-    let sql = 'SELECT * FROM recommendations';
-    let params = [];
-
-    if (search) {
-        sql += ' WHERE title LIKE ? OR description LIKE ?';
-        params = [`%${search}%`, `%${search}%`];
-    }
-
-    connection.query(sql, params, (err, results) => {
-        if (err) {
-            console.error('Database query error:', err);
-
-        // Get errors from flash, or fallback to a single error string in array
-            const errors = req.flash('error');
-            if (errors.length === 0) errors.push('Error loading recommendations');
-
-            return res.render('recommendations', {
-                user: req.session.user,
-                messages: [],        // no success messages
-                errors: errors,      // errors from flash or fallback
-                recommendations: [],
-                search
-            });
-        }
-
-    // Get any flash messages and errors BEFORE rendering
-        const messages = req.flash('success');
-        const errors = req.flash('error');
-
-        res.render('recommendations', {
-            user: req.session.user,
-            messages: messages.length > 0 ? messages : [],
-            errors: errors.length > 0 ? errors : [],
-            recommendations: results,
-            search
-        });
-    });
-});
-
-app.get('/recommendations/add', (req, res) => {
-    if (!req.session.user || req.session.user.role !== 'admin') {
-        return res.status(403).send('Forbidden');
-    }
-
-    res.render('add_recommendations', {
-        user: req.session.user,
-        errors: [],
-        messages: []
-    });
-});
-
-// Add recommendation (Admin only)
-app.post('/recommendations/add', checkAuthenticated, (req, res) => {
-    if (req.session.user.role !== 'admin') {
-        req.flash('error', 'You are not authorized to add recommendations.');
-        return res.redirect('/recommendations');
-    }
-
-    const { title, description, image_url, food_id } = req.body;
-    const userId = req.session.user.id; 
-    const stallId = req.session.user.stall_id || null;  // handle if undefined
-
-    if (!title || !description) {
-        req.flash('error', 'All fields are required.');
-        return res.redirect('/recommendations/add');
-    }
-
-    const sql = 'INSERT INTO recommendations (title, description, image_url, user_id, stall_id, food_id) VALUES (?, ?, ?, ?, ?, ?)';
-    connection.query(sql, [title, description, image_url, userId, stallId, food_id], (err, result) => {
-        if (err) {
-            console.error('Error inserting recommendation:', err);
-            req.flash('error', 'Failed to add recommendation');
-            return res.redirect('/recommendations/add');
-        }
-        req.flash('success', 'Recommendation added!');
-        res.redirect('/recommendations');
-    });
-});
-
-
-// Edit recommendation (Authenticated users)
-app.get('/recommendations/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const id = req.params.id;
-    const sql = 'SELECT * FROM recommendations WHERE id = ?';
-    connection.query(sql, [id], (err, results) => {
-        if (err || results.length === 0) {
-            req.flash('error', 'Recommendation not found');
-            return res.redirect('/recommendations');
-        }
-        res.render('edit_recommendations', {
-            user: req.session.user,
-            recommendation: results[0],
-            errors: req.flash('error'),
-            messages: req.flash('success')
-        });
-    });
-});
-
-app.post('/recommendations/edit/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const id = req.params.id;
-    const { title, description, image_url } = req.body;
-
-    if (!title || !description) {
-        req.flash('error', 'All fields are required.');
-        return res.redirect(`/recommendations/edit/${id}`);
-    }
-
-    const sql = 'UPDATE recommendations SET title = ?, description = ?, image_url = ? WHERE id = ?';
-    connection.query(sql, [title, description, image_url, id], (err, result) => {
-        if (err) {
-            req.flash('error', 'Failed to update recommendation');
-            return res.redirect(`/recommendations/edit/${id}`);
-        }
-        req.flash('success', 'Recommendation updated!');
-        res.redirect('/recommendations');
-    });
-});
-
-// Delete recommendation (Admin only)
-app.post('/recommendations/delete/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const id = req.params.id;
-
-    const sql = 'DELETE FROM recommendations WHERE id = ?';
-    connection.query(sql, [id], (err, result) => {
-    if (err) {
-            req.flash('error', 'Failed to delete recommendation');
-            return res.redirect('/recommendations');
-        }
-        req.flash('success', 'Recommendation deleted!');
-        res.redirect('/recommendations');
-    });
-});
-
-
-// Route to display all hawker stalls for users
-app.get('/view-stalls', (req, res) => {
-    const sqlQuery = 'SELECT * FROM stalls';
-    connection.query(sqlQuery, (err, result) => {
-        if (err) {
-            console.log(err);
-            req.flash('error', 'Error fetching stalls');
-            return res.redirect('/');
-        }
-        res.render('view-stalls', { stalls: result });
-    });
-});
-
-// Add Stall Route (GET)
-app.get('/add-stall', checkAuthenticated, checkAdmin, (req, res) => {
-    res.render('add', { 
-        messages: req.flash('success'),  // Display success message if any
-        errors: req.flash('error')      // Display error message if any
-    });
-});
-
-// Add Stall Route (POST)
-app.post('/add-stall', checkAuthenticated, checkAdmin, (req, res) => {
-    const { name, location, cuisine_type, imageUrl, center_id } = req.body;
-
-    // Validate required fields
-    if (!name || !location || !cuisine_type || !center_id) {
-        req.flash('error', 'All fields are required.');
-        return res.redirect('/add-stall');
-    }
-
-    const image_url = imageUrl || null;
-
-    const sql = 'INSERT INTO stalls (name, location, cuisine_type, center_id, image_url) VALUES (?, ?, ?, ?, ?)';
-    connection.query(sql, [name, location, cuisine_type, center_id, image_url], (err, result) => {
-        if (err) {
-            console.error('Error inserting stall:', err.message);
-            req.flash('error', 'Failed to add stall.');
-            return res.redirect('/add-stall');
-        }
-
-        req.flash('success', 'Stall added successfully!');
-        res.redirect('/dashboard');
-    });
-});
-
-
-
-// Edit Stall Details (GET)
-app.get('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const { id } = req.params;
-    const sqlGetStall = 'SELECT * FROM stalls WHERE id = ?';
-
-    connection.query(sqlGetStall, [id], (err, result) => {
-        if (err || result.length === 0) {
-            req.flash('error', 'Stall not found.');
-            return res.redirect('/admin');
-        }
-
-        res.render('edit', {
-            stall: result[0],
-            flash: req.flash()
-        });
-    });
-});
-
-
-// Edit Stall Details (POST)
-app.post('/edit-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const { id } = req.params;
-    const { name, location, cuisine_type, image_url } = req.body;
-
-    const sqlUpdateStall = `
-        UPDATE stalls
-        SET name = ?, location = ?, cuisine_type = ?, image_url = ?
-        WHERE id = ?
-    `;
-
-    connection.query(sqlUpdateStall, [name, location, cuisine_type, image_url, id], (err) => {
-        if (err) {
-            console.error("Update Error:", err.message);
-            req.flash('error', 'Failed to update stall.');
-            return res.redirect(`/edit-stall/${id}`);
-        }
-
-        req.flash('success', 'Stall updated successfully!');
-        res.redirect('/admin');
-    });
-});
-
-// Deleting a Stall
-app.post('/delete-stall/:id', checkAuthenticated, checkAdmin, (req, res) => {
-    const { id } = req.params;
-    const sqlDeleteStall = 'DELETE FROM stalls WHERE id = ?';
-    connection.query(sqlDeleteStall, [id], (err, result) => {
-        if (err) {
-            req.flash('error', 'Failed to delete stall.');
-            return res.redirect('/admin');
-        }
-
-        req.flash('success', 'Stall deleted successfully!');
-        res.redirect('/admin');
     });
 });
 
