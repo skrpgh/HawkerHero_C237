@@ -14,11 +14,11 @@ const upload = multer({ storage });
 
 // MySQL connection
 const connection = mysql.createConnection({
-    host: 'c237-all.mysql.database.azure.com',
+    host: 'llr4jx.h.filess.io',
     port: 61002,
-    user: 'c237admin',
-    password: 'c2372025!',
-    database: 'c237_hawkerhero'
+    user: 'HawkerHero_movesupply',
+    password: '96383785232dfb2073f21e023bdad6a85e59e45d',
+    database: 'HawkerHero_movesupply'
 });
 connection.connect(err => {
     if (err) {
@@ -888,4 +888,3 @@ app.listen(PORT, () => console.log(`Hawker Hero running on port ${PORT}`));
 
 
 //testing 123
-//hi
